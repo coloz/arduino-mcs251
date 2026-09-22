@@ -2,7 +2,7 @@
 # See README.md and tools/stcxx-driver/README.md for compiler usage and support boundaries.
 
 name=mcs251
-version=0.0.9
+version=0.0.1
 
 compiler.warning_flags=--less-pedantic --stcxx-warnings=default
 compiler.warning_flags.none=--less-pedantic --stcxx-warnings=none

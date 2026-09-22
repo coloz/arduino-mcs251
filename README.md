@@ -2,9 +2,9 @@
 
 编译驱动由配套 [stcxx/compiler](../stcxx/compiler/) 统一维护，基础运行库与宿主锁来自 [stcxx/sdk](../stcxx/sdk/)。重建驱动时需将两个仓库并列放置；已安装的开发板包无需源码仓库。独立于 Arduino 的 C/C++ 编译见 [STCXX SDK 使用说明](../stcxx/sdk/README.md)。
 
-面向 STC **MCS251** 芯片的 Arduino core。当前版本 **0.0.9**，支持 Windows x64 和 Apple Silicon macOS 15+，仅维护 10 个型号；所有型号固定使用 `-mmcs251`，Arduino 架构标识为 `mcs251`。
+面向 STC **MCS251** 芯片的 Arduino core。当前版本 **0.0.1**，支持 Windows x64 和 Apple Silicon macOS 15+，仅维护 10 个型号；所有型号固定使用 `-mmcs251`，Arduino 架构标识为 `mcs251`。
 
-MCS51 芯片、板项和 C++ 适配路径已移除。旧的 `arduino-stc51:mcs51:…` FQBN 不再适用，需要重新安装当前源码并选择新板项。工程目录为 `arduino-mcs251`。
+MCS51 芯片、板项和 C++ 适配路径已移除。旧的 MCS51 FQBN 不再适用，需要重新安装当前源码并选择新板项。工程目录为 `arduino-mcs251`。
 
 FQBN 统一为 `stc:mcs251:<variants>`，其中 `<variants>` 是 `boards.txt` 中的板卡 ID（对应 `devices.json` 的 `id`），例如 `stc:mcs251:stc32g8k64`、`stc:mcs251:ai8051u_34k64`。时钟等菜单参数仍可附加在末尾，例如 `stc:mcs251:ai8051u_34k64:clock=40m`。包标识为 `stc`，开发板管理器中的显示名称为 `mcs251`。
 
@@ -16,28 +16,28 @@ Arduino 构建入口为 Rust 原生 **`stcxx.exe` / `stcxx`**，直接调度 Cla
 
 SDK 通过原生构建适配入口兼容未经修改的 aily-builder 1.2.17：对象文件封装完整编译数据，归档支持标准 rcs 调用，并通过标准配方导出 HEX。Arduino CLI 使用同一入口。升级后请清理旧构建缓存。实现与格式约定见 [aily-builder 适配说明](tools/stcxx-driver/README.md#aily-builder)。Windows x64 和 Apple Silicon macOS 15+ 使用各自的原生构建。
 
-0.0.9 提供 Windows x64 和 Apple Silicon 原生安装包，索引同时保留 0.0.7 及更早版本。源码构建使用 `node scripts/build-native-driver.mjs`。
+0.0.1 提供 Windows x64 和 Apple Silicon 原生安装包，发布说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。源码构建使用 `node scripts/build-native-driver.mjs`。
 
 ## 安装
 
 在 Arduino IDE 的“附加开发板管理器网址”中加入：
 
 ```text
-https://raw.githubusercontent.com/coloz/arduino-stc51/main/package_mcs251_index.json
+https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
 ```
 
-在开发板管理器中安装 **mcs251 0.0.9**，然后选择对应型号。Arduino CLI 可使用：
+在开发板管理器中安装 **mcs251 0.0.1**，然后选择对应型号。Arduino CLI 可使用：
 
 ```powershell
-arduino-cli core update-index --additional-urls https://raw.githubusercontent.com/coloz/arduino-stc51/main/package_mcs251_index.json
-arduino-cli core install stc:mcs251@0.0.9 --additional-urls https://raw.githubusercontent.com/coloz/arduino-stc51/main/package_mcs251_index.json
+arduino-cli core update-index --additional-urls https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
+arduino-cli core install stc:mcs251@0.0.1 --additional-urls https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
 ```
 
-安装资源见 [v0.0.9 Release](https://github.com/coloz/arduino-stc51/releases/tag/v0.0.9)。刷新开发板索引即可升级，并重新编译项目；FQBN 不变。需要回退时可显式安装 `stc:mcs251@0.0.8`。
+安装资源见 [v0.0.1 Release](https://github.com/coloz/arduino-mcs251/releases/tag/v0.0.1)。使用上述索引安装 `stc:mcs251@0.0.1`，并选择对应板卡。如果已有安装，请先卸载后重新安装，清理构建缓存并重新编译。
 
-从旧包标识 `arduino-stc51` 迁移时，需安装 `stc:mcs251` 并重新选择板卡，将项目和脚本中的旧 FQBN 前缀改为 `stc:mcs251:`；旧包的版本升级不会自动完成迁移。确认新包可用后，可卸载旧包。手动安装源码时，平台目录应为 `<sketchbook>/hardware/stc/mcs251`；开发板管理器安装路径为 `packages/stc/hardware/mcs251/<version>`。
+从旧包迁移时，需安装 `stc:mcs251` 并重新选择板卡，将项目和脚本中的旧 FQBN 前缀改为 `stc:mcs251:`；旧包的版本升级不会自动完成迁移。确认新包可用后，可卸载旧包。手动安装源码时，平台目录应为 `<sketchbook>/hardware/stc/mcs251`；开发板管理器安装路径为 `packages/stc/hardware/mcs251/<version>`。
 
-0.0.7 开发板管理器包安装 `stcxx-toolchain` `0.2.0` 和 `stc-cli` `0.1.0-stc.2` 两项工具。原生打包器只保留 Clang、LLVM-CBE、SDCC 及其原生辅助程序、头文件、运行库和许可证，不携带解释器。C++ 编译流程仍为 Clang → LLVM-CBE → SDCC，`stc-cli` 继续负责 UART 和原生 USB 上传，并支持新 CDC 的 1200 bps 复位。
+0.0.1 开发板管理器包安装 `stcxx-toolchain` `0.3.0` 和 `stc-cli` `0.1.0-stc.2` 两项工具。原生打包器只保留 Clang、LLVM-CBE、SDCC 及其原生辅助程序、头文件、运行库和许可证，不携带解释器。C++ 编译流程仍为 Clang → LLVM-CBE → SDCC，`stc-cli` 继续负责 UART 和原生 USB 上传，并支持新 CDC 的 1200 bps 复位。
 
 ## 支持型号
 
@@ -86,7 +86,7 @@ $build.firmware
 
 平台只提供 C++11 模式，所有板项默认启用 C++ 编译链，无需选择语言或附加 `cppcore` 参数。安装脚本不传 FQBN 时默认编译 STC32G8K64、12 MHz 的 C++ Blink。G12K128、G144K246 等完整 Flash 布局依赖发布包中重建的 SDCC 分区功能；旧原版工具包不满足时构建会明确拒绝。详见 [原生驱动说明](tools/stcxx-driver/README.md)。
 
-源码安装脚本用于维护者调试。脚本会下载并校验锁定的统一工具链和上传器归档，也可通过 `-ToolCacheDirectory` 复用本地归档，或通过 `-ToolManifestPath` 指定已验证的工具清单。发布前将本地工具归档目录传给 `-ToolCacheDirectory`。统一工具链打包步骤见 [打包说明](https://github.com/coloz/arduino-stc51/blob/main/scripts/TOOLCHAIN-PACKAGING.md)。打包不会自动发布。版本变化见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
+源码安装脚本用于维护者调试。脚本会下载并校验锁定的统一工具链和上传器归档，也可通过 `-ToolCacheDirectory` 复用本地归档，或通过 `-ToolManifestPath` 指定已验证的工具清单。发布前将本地工具归档目录传给 `-ToolCacheDirectory`。统一工具链打包步骤见 [打包说明](https://github.com/coloz/arduino-mcs251/blob/main/scripts/TOOLCHAIN-PACKAGING.md)。打包不会自动发布。版本变化见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
 ## C++ 与 Arduino API
 
@@ -94,11 +94,11 @@ C++ 使用 Clang → LLVM-CBE → SDCC，提供 `String`、`Print`、`Stream`、
 
 支持 GPIO、计时、UART1、按型号提供的 ADC/PWM/外部中断，以及 Wire、SPI、SoftwareSerial、LiquidCrystal、Stepper 和受限的 SD。接口以 [Arduino.h](cores/STC/Arduino.h) 和各库头文件为准，使用示例位于 `libraries/<库名>/examples`。总线和 GPIO 共用引脚，使用前核对型号和封装。
 
-0.0.4 新增 [USB HID](libraries/HID/README.md)、[Keyboard](libraries/Keyboard/README.md)、[Mouse](libraries/Mouse/README.md) 和 [CAN](libraries/CAN/README.md) 通信库，随 core 平台包一同安装。键鼠 API 移植自 Arduino 官方库；CAN 提供 `HardwareCAN` / `CanMsg` 风格接口和独立的分包适配器。HID 按型号支持 G12、G144、AI8051U，CAN 支持 G12、G8、CL、G144；AI8051U-34K16 当前只能容纳较小的自定义 HID 示例，键鼠示例超出 Flash。各库说明包含支持型号、接线和示例索引。
+平台提供 [USB HID](libraries/HID/README.md)、[Keyboard](libraries/Keyboard/README.md)、[Mouse](libraries/Mouse/README.md) 和 [CAN](libraries/CAN/README.md) 通信库，随 core 平台包一同安装。键鼠 API 移植自 Arduino 官方库；CAN 提供 `HardwareCAN` / `CanMsg` 风格接口和独立的分包适配器。HID 按型号支持 G12、G144、AI8051U，CAN 支持 G12、G8、CL、G144；AI8051U-34K16 当前只能容纳较小的自定义 HID 示例，键鼠示例超出 Flash。各库说明包含支持型号、接线和示例索引。
 
 ABI 使用 16 位 `int`、32 位 `long`/`size_t`/`ptrdiff_t`、24 位指针，大端布局，`double` 与 `float` 均为 32 位。异常、RTTI、线程和完整 STL 不在支持范围内。不要直接发送结构体内存作为外部协议；可使用 `STCByteOrder.h`。运行时配置见 [runtime-manifest.json](cores/STC/runtime/runtime-manifest.json)。
 
-0.0.6 已移除随附的实验性 Adafruit NeoPixel 库。
+平台不包含实验性 Adafruit NeoPixel 库。
 
 ## 烧录
 
@@ -108,7 +108,7 @@ AI8051U、STC32CL8K48/64、STC32G12K64 和 STC32G144K246 的 UART ISP 当前无�
 
 若仍提示 `Property 'upload.tool.serial' is undefined`，请刷新索引、确认已安装当前宿主支持的版本并选择 `stc:mcs251` 下的板卡，然后重启 IDE。
 
-也可从 [v0.0.7 安装资源](https://github.com/coloz/arduino-stc51/releases/tag/v0.0.7) 下载对应宿主的独立 `stc-cli`，先检查 HEX 再手动烧录，例如：
+也可从 [v0.0.1 安装资源](https://github.com/coloz/arduino-mcs251/releases/tag/v0.0.1) 下载对应宿主的独立 `stc-cli`，先检查 HEX 再手动烧录，例如：
 
 ```powershell
 $stc = '..\stc-cli\target\release\stc-cli.exe'

@@ -17,9 +17,8 @@ or package the old embedded interpreter, scripts, bytecode or build-input trees.
 The platform includes the native driver, its dependency licenses, lock files,
 core, variants, libraries and examples. Arduino invokes stcxx directly.
 
-Unified toolchains use the shared driver's 0.3.0 version. Published 0.0.7
-platforms retain their original 0.2.0 dependency. Do not replace an existing
-published asset.
+Unified toolchains use the shared driver's 0.3.0 version. Do not replace an
+existing published asset.
 
 This SDK consumes prebuilt compiler packages. Compiler source patches, source
 rebuild scripts and their dedicated notices are not SDK build inputs and have
@@ -31,26 +30,28 @@ Archives use stable entry order and timestamps. Each ZIP has an adjacent JSON
 report containing its size and SHA-256, and includes a file manifest. Existing
 output ZIPs are never overwritten. Windows binaries statically link the C runtime.
 
-The 0.0.9 Boards Manager release supplies Windows x64 and Apple Silicon native
-packages with stcxx-toolchain 0.3.0 and stc-cli 0.1.0-stc.2. The index retains
-previous versions and their original dependencies for rollback. Qualify a native build on Apple Silicon
-before including that host in a release; Windows verification does not qualify macOS.
+The 0.0.1 Boards Manager release supplies Windows x64 and Apple Silicon native
+packages with stcxx-toolchain 0.3.0 and stc-cli 0.1.0-stc.2, hosted at
+https://github.com/coloz/arduino-mcs251/releases/tag/v0.0.1.
+This repository starts a new version history at 0.0.1. Qualify a native build on
+Apple Silicon before including that host in a release; Windows verification does
+not qualify macOS. Unchanged binaries retain their prior native qualification.
 
 New platform archives use `arduino-mcs251-<version>.zip` and the matching ZIP root.
-The renamed `package_mcs251_index.json` retains published archive filenames,
-sizes and checksums, including older `arduino-stc51-<version>` archives.
+`package_mcs251_index.json` contains this repository's releases and their exact
+archive filenames, sizes and checksums.
 
 For native releases, package the platform as `arduino-mcs251-<version>.zip`,
 record tool archive sizes, hashes, roots and pinned release URLs in
 `tools/toolchain-manifest.json`, then run:
 
 ```text
-python scripts/create-native-release-index.py --platform dist/release-0.0.9/arduino-mcs251-0.0.9.zip --assets dist/release-0.0.9 --previous dist/release-0.0.9/previous-index.json --output package_mcs251_index.json
+python scripts/create-native-release-index.py --platform dist/release-0.0.1/arduino-mcs251-0.0.1.zip --assets dist/release-0.0.1 --previous dist/release-0.0.1/previous-index.json --output package_mcs251_index.json
 ```
 
-Save the published index as `previous-index.json` before generating the new one.
-Generating `package_mcs251_index.json` also writes an identical
-`package_arduino-stc51_index.json` compatibility copy for existing subscriptions.
+Save this repository's published index as `previous-index.json` before generating
+the next one. For the first release, use the `stc` package metadata with empty
+`platforms` and `tools` arrays. The canonical index is `package_mcs251_index.json`.
 The native index generator verifies every ZIP payload manifest and tool archive
 binding, requires matching host dependencies and driver binaries, and retains
 previous versions. Uploader ZIPs include licenses, `MANIFEST.sha256` and a

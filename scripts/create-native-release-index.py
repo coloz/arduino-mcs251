@@ -93,7 +93,7 @@ def create(platform, assets, previous, manifest):
             require(path.stat().st_size == system['size'] and sha256(path) == system['sha256'],
                     f'Tool archive differs from manifest: {name}')
             if not existing:
-                require(system['url'] == 'https://github.com/coloz/arduino-stc51/releases/download/v'
+                require(system['url'] == 'https://github.com/coloz/arduino-mcs251/releases/download/v'
                         + version + '/' + name, f'Unexpected tool URL: {name}')
             contents = payload(path, system['archiveRoot'])
             if tool['id'] == 'stcxx-toolchain':
@@ -119,7 +119,7 @@ def create(platform, assets, previous, manifest):
     package['platforms'].insert(0, {
         'name': 'mcs251', 'architecture': 'mcs251', 'version': version,
         'category': 'Contributed',
-        'url': f'https://github.com/coloz/arduino-stc51/releases/download/v{version}/{platform.name}',
+        'url': f'https://github.com/coloz/arduino-mcs251/releases/download/v{version}/{platform.name}',
         'archiveFileName': platform.name, 'checksum': 'SHA-256:' + sha256(platform),
         'size': str(platform.stat().st_size), 'boards': [{'name': d['model']} for d in devices],
         'toolsDependencies': [{'packager': 'stc', 'name': t['id'], 'version': t['version']} for t in tools],
@@ -139,10 +139,6 @@ def main():
                     json.loads(args.manifest.read_text(encoding='utf-8')))
     encoded = json.dumps(result, indent=2) + '\n'
     args.output.write_text(encoded, encoding='utf-8', newline='\n')
-    if args.output.name == 'package_mcs251_index.json':
-        # Existing Boards Manager subscriptions must continue receiving updates.
-        args.output.with_name('package_arduino-stc51_index.json').write_text(
-            encoded, encoding='utf-8', newline='\n')
     print('PASS: native payload manifests, immutable archive bindings and retained previous releases')
 
 
