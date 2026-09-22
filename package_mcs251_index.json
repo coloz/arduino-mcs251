@@ -16,8 +16,8 @@
           "category": "Contributed",
           "url": "https://github.com/coloz/arduino-mcs251/releases/download/v0.0.1/arduino-mcs251-0.0.1.zip",
           "archiveFileName": "arduino-mcs251-0.0.1.zip",
-          "checksum": "SHA-256:864a72686e21e71861f5f963a6d96586801aa2dbc9bddbbd2e9a17eeffac58b9",
-          "size": "3960131",
+          "checksum": "SHA-256:ca347118bf35fe18fe6a2e0449cd700bd43de03a0a772290196a3f3908a4ecf0",
+          "size": "3961514",
           "boards": [
             {
               "name": "STC32G12K128"
