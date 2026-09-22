@@ -97,6 +97,12 @@ the standalone toolchain's `bin/` directory, which has no Arduino adapter.
   (`EM_8051`, without debug symbols). The standard `recipe.objcopy.hex.pattern`
   exports those bytes as Intel HEX for upload. Memory reporting still uses
   STCXX's `.mem` report.
+- `size` reports Flash and external data (XDATA plus PDATA, including reserved
+  heap storage) for Arduino's standard two-line summary. Internal DATA/IDATA
+  and the separate EDATA stack are excluded from the external data budget.
+  Arduino's fixed "leaving ... bytes for local variables" wording means
+  unallocated external data space here, not measured free stack or heap.
+  `advanced-size <sketch>.ino.mem` remains available for detailed diagnostics.
 - A standard prebuild hook copies sibling C/C++ files and recursive `src/`
   inputs into the builder's existing generated-sketch directory before analysis.
   Arduino CLI already handles these files, so the hook is inactive there.

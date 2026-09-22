@@ -1,5 +1,7 @@
 # 0.0.1（2026-09-22）
 
+- 编译容量输出改为 Arduino 标准的程序空间、动态内存两行摘要；动态内存包含预留堆，容量随 XRAM 菜单切换，独立栈与内部 RAM 明细保留在 `advanced-size` 诊断命令中。
+
 - 在 [coloz/arduino-mcs251](https://github.com/coloz/arduino-mcs251) 发布首个版本。
 - 支持 10 个 MCS251 型号，提供 Arduino C++11 API、原生编译驱动及核心运行库；FQBN 为 `stc:mcs251:<variant>`。
 - 提供 Windows x64 和 Apple Silicon macOS 15+ 原生安装包，编译运行时无需 Node、Python 或 shell。

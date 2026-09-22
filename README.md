@@ -72,6 +72,8 @@ STC32G144K246 的 `工具 → Upload method` 默认为 `Automatic (USB CDC or UA
 
 ## 从源码构建
 
+编译完成后使用 Arduino 标准的 `Sketch uses ...` 和 `Global variables use ...` 两行容量摘要。动态内存占用统计 XDATA/PDATA，包含固定预留的堆；最大容量跟随所选 XRAM 配置。MCS251 的局部变量栈位于独立的 EDATA 区域，因此标准文案中的 `leaving ... bytes for local variables` 在本平台表示尚未分配的外部数据空间，并非实际剩余栈或运行时可用堆。内部 DATA/IDATA、栈和堆预留明细可通过 `stcxx advanced-size <构建目录>/<Sketch>.ino.mem` 查看。
+
 准备 Arduino CLI、Rust、Node.js 及所需编译工具，先运行 `node scripts/build-native-driver.mjs`。原生打包和本机安装方法见 [打包说明](scripts/TOOLCHAIN-PACKAGING.md)。以下是保留的可选 PowerShell 维护入口（另需 tar），Arduino 编译本身不调用它。命令在源码仓库根目录执行；开发板管理器安装包不包含 `scripts` 维护工具：
 
 ```powershell

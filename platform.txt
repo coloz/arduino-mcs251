@@ -68,12 +68,11 @@ recipe.c.combine.pattern="{compiler.driver}" --platform "{runtime.platform.path}
 recipe.output.tmp_file={build.project_name}.hex
 recipe.output.save_file={build.project_name}.{build.variant}.hex
 
-# SDCC writes a human-readable .mem file next to the Intel HEX output. The
-# native driver includes internal DATA/IDATA usage as well as PDATA and XDATA.
+# Use Arduino's standard two-line summary. Dynamic memory counts XDATA/PDATA
+# (including the reserved heap); internal RAM and the EDATA stack are separate.
 recipe.size.pattern="{compiler.driver}" --platform "{runtime.platform.path}" size "{build.path}/{build.project_name}.mem"
 recipe.size.regex=^STC_PROGRAM_BYTES ([0-9]+)$
 recipe.size.regex.data=^STC_RAM_BYTES ([0-9]+)$
-recipe.advanced_size.pattern="{compiler.driver}" --platform "{runtime.platform.path}" advanced-size "{build.path}/{build.project_name}.mem"
 
 # Arduino CLI/IDE library discovery and prototype generation.
 preproc.includes.flags=-M -MG -MP

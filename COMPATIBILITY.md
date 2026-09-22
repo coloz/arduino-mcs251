@@ -25,7 +25,7 @@
 | 编译缓存 | C++ 对象及 bitcode、REL、IR、元数据校验；缺失或损坏明确失败并要求清理缓存，避免静默丢失构造函数 |
 | 预编译库 | `dot_a_linkage`、`precompiled=true/full`、`compiler.libraries.ldflags`；C++ `.a` 为包含源码快照与哈希的独立封装；原生 C 接受 SDAR 归档 |
 | 诊断 | 普通命令与成功信息使用 stdout；真实警告/错误使用 stderr；IDE 警告级别传给前端，显式 `-Werror` 仍生效 |
-| 内存报告 | Flash、XDATA（含堆预留）、内部静态 RAM、栈及堆预留分别报告；不把预留量称为运行时峰值或剩余堆 |
+| 内存报告 | 默认使用 Arduino 标准两行摘要；动态内存统计 XDATA/PDATA（含堆预留），总容量随 XRAM 菜单变化；内部静态 RAM 和 EDATA 栈独立，不计入该比例；`advanced-size` 可查看分区明细 |
 | tone | 单路 Timer2 非阻塞方波，支持时长及 `noTone`；已有 Timer2 占用时拒绝启动 |
 | Wire | 原有主机模式，加硬件从机、接收/请求回调；从机固定 SDA=P3.3、SCL=P3.2，默认缓冲 32 字节 |
 | SD | FAT16/FAT32、8.3 路径、嵌套目录、目录枚举、多文件、共享句柄；不支持长文件名、exFAT、断电事务保证 |

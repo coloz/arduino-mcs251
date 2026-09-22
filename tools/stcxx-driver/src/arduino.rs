@@ -135,12 +135,17 @@ pub fn dispatch() -> Result<bool> {
         "link-units",
         "export-hex",
         "prepare-sketch",
+        "size",
     ]
     .contains(&op)
     {
         return Ok(false);
     }
     match op {
+        "size" => {
+            ensure!(args.len() == 2, "size requires one .mem report");
+            crate::memory::size(&absolute(&args[1])?)?;
+        }
         "rcs" | "archive-unit" => {
             ensure!(args.len() >= 3, "archive requires output and objects");
             archive(&absolute(&args[1])?, &args[2..], op == "archive-unit")?;

@@ -1,5 +1,6 @@
 mod arduino;
 mod firmware;
+mod memory;
 
 fn main() {
     match arduino::dispatch() {
