@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "runtime_abi_version": 1,
+  "identity_scope": "runtime-sub-ABI-only",
+  "complete_build_identity_source": {
+    "windows-x86_64": "tools/stcxx-driver/toolchain-lock.windows-x86_64.json",
+    "darwin-arm64": "tools/stcxx-driver/toolchain-lock.macos-arm64.json"
+  },
+  "complete_build_identity_required_before_link": true,
+  "profiles": {
+    "mcs251": {
+      "identity": "stc-arduino-cxx-v1-mcs251-be-size4-pdiff4-ptr3-fnptr3-guard1-direct",
+      "identity_symbol": "__stcxx_abi_stc_arduino_cxx_v1_mcs251_be_size4_pdiff4_ptr3_fnptr3_guard1_direct",
+      "endianness": "big",
+      "size_t_bytes": 4,
+      "size_t_alignment_bytes": 1,
+      "ptrdiff_t_bytes": 4,
+      "ptrdiff_t_alignment_bytes": 1,
+      "generic_pointer_bytes": 3,
+      "function_pointer_bytes": 3,
+      "ordinary_function_pointer_bytes": 3,
+      "data_member_pointer_bytes": 3,
+      "member_function_pointer_bytes": 6,
+      "member_pointer_codegen_integer_bits": 24,
+      "member_call_program_address_space": 0
+    }
+  },
+  "guard": {
+    "implementation": "compiler-direct-byte",
+    "required_compiler_flag": "-fno-threadsafe-statics",
+    "size_bytes": 1,
+    "alignment_bytes": 1,
+    "initialized_offset": 0,
+    "states": {
+      "uninitialized": 0,
+      "initialized": 1
+    },
+    "thread_safe": false,
+    "recursion_detection": false,
+    "runtime_hooks": []
+  },
+  "constructor_bridge": {
+    "abi_probe": "__stcxx_bridge_require_abi",
+    "count": "__stcxx_bridge_ctor_count",
+    "invoke": "__stcxx_bridge_invoke_ctor",
+    "runtime_entry": "__stcxx_run_global_ctors",
+    "order": "increasing bridge index",
+    "runs": "once"
+  },
+  "sdcc_malloc_abi": {
+    "source": "device/lib/malloc.c",
+    "raw_sha256": "2649be26b08eeb4be411d52deb21864da91084d30c082a2674376fa9cef7ec7e",
+    "git_blob": "bc6f24625f7ed0959bef5c2fa18b056cbaaf786f",
+    "sources": {
+      "device/lib/malloc.c": {
+        "raw_sha256": "2649be26b08eeb4be411d52deb21864da91084d30c082a2674376fa9cef7ec7e",
+        "git_blob": "bc6f24625f7ed0959bef5c2fa18b056cbaaf786f"
+      },
+      "device/lib/mcs251/heap.h": {
+        "raw_sha256": "95dc3f1ab3cb956c214e0266de9d4c51648a8f40ca9174adf439e7b73767b280",
+        "git_blob": "570a7f5650147f8b101157ee2b4ec02b8a7be274"
+      },
+      "device/lib/_heap_init.c": {
+        "raw_sha256": "bcf1eeb505c089cb310398e0c6932e273df2b37acd913fa3598b10ffafa88c43",
+        "git_blob": "0dd3c49a5fc1cc6171d3c8a2033d554d6b89b83b"
+      }
+    },
+    "free_list_symbol": "__sdcc_heap_free",
+    "heap_size_symbols": {
+      "mcs251": "__sdcc_heap_size32"
+    },
+    "heap_size_bytes": {
+      "mcs251": 4
+    },
+    "initialized_state_symbol": "__sdcc_heap_initialized",
+    "header_fields": [
+      "next",
+      "next_free"
+    ],
+    "payload_offset": "offsetof(struct header, next_free)",
+    "heap_end": "heap_start + heap_size - 1",
+    "target_pointer_bytes": {
+      "mcs251": 3
+    }
+  },
+  "allocation": {
+    "heap_hooks": [
+      "stcxx_malloc",
+      "stcxx_realloc",
+      "stcxx_free"
+    ],
+    "telemetry_hooks": [
+      "stcxx_allocator_read_telemetry"
+    ],
+    "telemetry_result": "six packed uint16_t fields: arena, initial total, current total, current largest, minimum total, minimum largest",
+    "telemetry_sampling": "after every successful stcxx_malloc and stcxx_realloc",
+    "telemetry_code": "stcxx_heap_telemetry.c is selected from the core archive when sampling or queries are referenced; stcxx_heap.c still initializes the heap and takes its initial integrity snapshot before global constructors",
+    "telemetry_scope": "allocations routed through the stcxx allocator ABI; direct third-party libc malloc calls are excluded",
+    "telemetry_corruption_policy": "fail closed on out-of-heap, reverse, cyclic, truncated, or overflowing SDCC free-list state",
+    "telemetry_state": {
+      "source": "cores/STC/runtime/src/stcxx_heap_state.c",
+      "storage": "XDATA",
+      "bytes": 8,
+      "separate_from_explicit_heap_object": true
+    },
+    "oom_hook_setter": "stcxx_set_oom_hook",
+    "oom_hook_semantics": "notification only; a returning hook proceeds to STCXX_PANIC_OUT_OF_MEMORY",
+    "throwing_new_failure": "never returns null; notify the OOM hook when installed, then panic if the hook returns",
+    "nothrow_new_failure": "return null without invoking the OOM or panic hook",
+    "zero_size_request": 1
+  },
+  "unsupported": [
+    "exceptions",
+    "RTTI",
+    "thread-safe local statics",
+    "atexit and global destructor execution"
+  ]
+}

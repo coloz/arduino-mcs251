@@ -1,0 +1,39 @@
+#include "Arduino.h"
+#include "wiring_digital_private.h"
+
+#if STC_CORE_HAS_PORTB
+# define STC_INPUT_PIN_PORT_COUNT 12
+#elif STC_CORE_HAS_PORTA
+# define STC_INPUT_PIN_PORT_COUNT 11
+#elif STC_CORE_HAS_PORT9
+# define STC_INPUT_PIN_PORT_COUNT 10
+#elif STC_CORE_HAS_PORT8
+# define STC_INPUT_PIN_PORT_COUNT 9
+#else
+# define STC_INPUT_PIN_PORT_COUNT 8
+#endif
+
+uint8_t __stc_digital_input_pins[STC_INPUT_PIN_PORT_COUNT] = {
+    PIN_VALID_MASK_P0,
+    PIN_VALID_MASK_P1,
+    PIN_VALID_MASK_P2,
+    PIN_VALID_MASK_P3,
+    PIN_VALID_MASK_P4,
+    PIN_VALID_MASK_P5,
+    PIN_VALID_MASK_P6,
+    PIN_VALID_MASK_P7,
+#if STC_CORE_HAS_PORT8
+    PIN_VALID_MASK_P8,
+#endif
+#if STC_CORE_HAS_PORT9
+    PIN_VALID_MASK_P9,
+#endif
+#if STC_CORE_HAS_PORTA
+    PIN_VALID_MASK_PA,
+#endif
+#if STC_CORE_HAS_PORTB
+    PIN_VALID_MASK_PB,
+#endif
+};
+
+#undef STC_INPUT_PIN_PORT_COUNT

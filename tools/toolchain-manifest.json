@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 3,
+  "asOf": "2026-09-22",
+  "hostSupport": "Native Windows x64 and Apple Silicon macOS 15+",
+  "tools": [
+    {
+      "id": "stcxx-toolchain",
+      "packageName": "stcxx-toolchain",
+      "version": "0.3.0",
+      "purpose": "STC C/C++ toolchain: Clang/LLVM-CBE, SDCC, assembler, linker and runtime libraries",
+      "license": "Component licenses are preserved under frontend/ and sdcc/",
+      "systems": [
+        {
+          "host": "x86_64-mingw32",
+          "archiveFileName": "stcxx-toolchain-0.3.0-windows-x86_64.zip",
+          "archiveRoot": "stcxx-toolchain",
+          "size": 101897449,
+          "sha256": "22e5fbd9ccce4f1f63aee4383f113d00000e03330a8dba632841f14eea600e4f",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.8/stcxx-toolchain-0.3.0-windows-x86_64.zip"
+        },
+        {
+          "host": "arm64-apple-darwin",
+          "archiveFileName": "stcxx-toolchain-0.3.0-macos-arm64.zip",
+          "archiveRoot": "stcxx-toolchain",
+          "size": 68344872,
+          "sha256": "9d00fb9c5e9cc7860b8b46d1de1fe7d392f0681479de6111220935f0e8b9e3b9",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.8/stcxx-toolchain-0.3.0-macos-arm64.zip"
+        }
+      ]
+    },
+    {
+      "id": "stc-cli",
+      "packageName": "stc-cli",
+      "version": "0.1.0-stc.2",
+      "purpose": "Native UART and USB ISP uploader with acknowledged programming progress",
+      "upstream": "https://github.com/coloz/stc-cli",
+      "license": "MIT; see LICENSE and THIRD_PARTY_NOTICES.md in each archive",
+      "systems": [
+        {
+          "host": "x86_64-mingw32",
+          "archiveFileName": "stc-cli-0.1.0-windows-x86_64-r2.zip",
+          "archiveRoot": "stc-cli-0.1.0-windows-x86_64-r2",
+          "size": 612109,
+          "sha256": "04753bc28570ec370cc19709e70b15d446d1c497fc6fd1b5b8653a373b9f3fef",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.6/stc-cli-0.1.0-windows-x86_64-r2.zip"
+        },
+        {
+          "host": "arm64-apple-darwin",
+          "archiveFileName": "stc-cli-0.1.0-macos-arm64-r2.zip",
+          "archiveRoot": "stc-cli-0.1.0-macos-arm64-r2",
+          "size": 619305,
+          "sha256": "a8923e5da31432d24d3dccf9325dbf6132bbc0b646c731b547049674de0bc97c",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.6/stc-cli-0.1.0-macos-arm64-r2.zip"
+        }
+      ],
+      "sourceCommit": "79d4e948862f968539681c5bd9fab120d1315861"
+    }
+  ],
+  "components": [
+    {
+      "id": "sdcc-mcs251",
+      "packageName": "sdcc-mcs251",
+      "version": "4.6.0-stc.0.0.1-r1",
+      "purpose": "Compiler, assembler and linker for the MCS251 Arduino platform (-mmcs251)",
+      "upstream": "https://github.com/gevico/sdcc-c251",
+      "sourceTag": "v4.6.0-mcs251-20260804",
+      "sourceCommit": "b09075b6a93e6afe10645181e3aeff041ea37f87",
+      "license": "GPL; see README.md, COPYING and COPYING3 in each archive",
+      "systems": [
+        {
+          "host": "x86_64-mingw32",
+          "archiveFileName": "sdcc-mcs251-windows-x86_64-b09075b6a93e6afe10645181e3aeff041ea37f87-r9.zip",
+          "archiveRoot": "sdcc-mcs251",
+          "size": 14817947,
+          "sha256": "8ff65fb3e4522a0276891e0bc9091266969a3dffc443bdcebdf8ae00f3abd72e",
+          "sourcePatchSha256": "310d5d53f3cf246ea34b18bad44a868cb7dcd8f55faab317f5505da30747ef2d",
+          "buildHost": "Windows x64 cross build r9",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.2/sdcc-mcs251-windows-x86_64-b09075b6a93e6afe10645181e3aeff041ea37f87-r9.zip",
+          "preprocessorPatchSha256": "4d8bd5eb8e12b55a0f47f79a3ff76a1e09c1871675cbcb291607bd51b72fbe46"
+        },
+        {
+          "host": "arm64-apple-darwin",
+          "archiveFileName": "sdcc-mcs251-macos-arm64-b09075b6a93e6afe10645181e3aeff041ea37f87-r10.tar.bz2",
+          "archiveRoot": "sdcc-mcs251",
+          "size": 4388490,
+          "sha256": "1d07d4e246cd99fbcb55220959423401b8e07cfd5da7db78e1daeccadb20375a",
+          "sourcePatchSha256": "310d5d53f3cf246ea34b18bad44a868cb7dcd8f55faab317f5505da30747ef2d",
+          "buildHost": "Native macOS ARM64 r10",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.2/sdcc-mcs251-macos-arm64-b09075b6a93e6afe10645181e3aeff041ea37f87-r10.tar.bz2",
+          "preprocessorPatchSha256": "4d8bd5eb8e12b55a0f47f79a3ff76a1e09c1871675cbcb291607bd51b72fbe46"
+        }
+      ]
+    },
+    {
+      "id": "stcxx-frontend",
+      "packageName": "stcxx-frontend",
+      "version": "20.1.8-stc.3",
+      "purpose": "Native Clang/LLVM-CBE C++ frontend; Windows package includes embedded Python",
+      "license": "LLVM Apache-2.0 WITH LLVM-exception; Python PSF license; see each archive",
+      "systems": [
+        {
+          "host": "x86_64-mingw32",
+          "archiveFileName": "stcxx-frontend-20.1.8-windows-x86_64-r1.tar.bz2",
+          "archiveRoot": "stcxx-frontend",
+          "size": 86686769,
+          "sha256": "42103860d1ac311e4c60b4f1f144c301cc1dca9aa4a922ff2aa221c14fdad056",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.2/stcxx-frontend-20.1.8-windows-x86_64-r1.tar.bz2"
+        },
+        {
+          "host": "arm64-apple-darwin",
+          "archiveFileName": "stcxx-frontend-20.1.8-macos-arm64-r1.tar.bz2",
+          "archiveRoot": "stcxx-frontend",
+          "size": 54382979,
+          "sha256": "f0850765b5edf5f667a87a8910c9581510aa30febb1e297cfc036a38acf3e77a",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.2/stcxx-frontend-20.1.8-macos-arm64-r1.tar.bz2"
+        }
+      ]
+    }
+  ]
+}

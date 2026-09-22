@@ -1,0 +1,49 @@
+#ifndef STCXX_FREESTANDING_CSTDLIB
+#define STCXX_FREESTANDING_CSTDLIB
+
+#if defined(__GNUC__) || defined(__clang__)
+# pragma GCC system_header
+#endif
+
+#if !defined(__STC_CLANG_IR_ONLY__)
+# if defined(__GNUC__) || defined(__clang__)
+#  include_next <cstdlib>
+# else
+#  error "The STC cstdlib shim needs either the STC target or include_next"
+# endif
+#else
+# include <stdlib.h>
+namespace std {
+using ::div_t;
+using ::ldiv_t;
+using ::lldiv_t;
+using ::malloc;
+using ::calloc;
+using ::realloc;
+using ::free;
+using ::atof;
+using ::atoi;
+using ::atol;
+using ::atoll;
+using ::strtod;
+using ::strtof;
+using ::strtol;
+using ::strtoul;
+using ::strtoll;
+using ::strtoull;
+using ::abs;
+using ::labs;
+using ::llabs;
+using ::div;
+using ::ldiv;
+using ::lldiv;
+using ::rand;
+using ::srand;
+using ::abort;
+using ::exit;
+using ::bsearch;
+using ::qsort;
+}
+#endif
+
+#endif

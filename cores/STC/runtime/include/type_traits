@@ -1,0 +1,216 @@
+#ifndef STCXX_FREESTANDING_TYPE_TRAITS
+#define STCXX_FREESTANDING_TYPE_TRAITS
+
+#if defined(__GNUC__) || defined(__clang__)
+# pragma GCC system_header
+#endif
+
+#if !defined(__STC_CLANG_IR_ONLY__)
+# if defined(__GNUC__) || defined(__clang__)
+#  include_next <type_traits>
+# else
+#  error "The STC type_traits shim needs either the STC target or include_next"
+# endif
+#else
+
+#include <stddef.h>
+
+namespace std {
+template<class Type, Type Value>
+struct integral_constant {
+    static constexpr Type value = Value;
+    typedef Type value_type;
+    typedef integral_constant type;
+    constexpr operator value_type() const { return value; }
+};
+
+typedef integral_constant<bool, true> true_type;
+typedef integral_constant<bool, false> false_type;
+
+template<bool, class Type = void> struct enable_if {};
+template<class Type> struct enable_if<true, Type> { typedef Type type; };
+
+template<bool Condition, class TrueType, class FalseType>
+struct conditional { typedef TrueType type; };
+template<class TrueType, class FalseType>
+struct conditional<false, TrueType, FalseType> { typedef FalseType type; };
+
+template<class Left, class Right> struct is_same : false_type {};
+template<class Type> struct is_same<Type, Type> : true_type {};
+
+template<class Type> struct remove_const { typedef Type type; };
+template<class Type> struct remove_const<const Type> { typedef Type type; };
+template<class Type> struct remove_volatile { typedef Type type; };
+template<class Type> struct remove_volatile<volatile Type> { typedef Type type; };
+template<class Type> struct remove_cv {
+    typedef typename remove_volatile<typename remove_const<Type>::type>::type type;
+};
+
+template<class Type> struct add_const { typedef const Type type; };
+template<class Type> struct add_volatile { typedef volatile Type type; };
+template<class Type> struct add_cv { typedef const volatile Type type; };
+
+template<class Type> struct remove_reference { typedef Type type; };
+template<class Type> struct remove_reference<Type &> { typedef Type type; };
+template<class Type> struct remove_reference<Type &&> { typedef Type type; };
+template<class Type> struct add_lvalue_reference { typedef Type &type; };
+template<> struct add_lvalue_reference<void> { typedef void type; };
+template<> struct add_lvalue_reference<const void> { typedef const void type; };
+template<> struct add_lvalue_reference<volatile void> { typedef volatile void type; };
+template<> struct add_lvalue_reference<const volatile void> {
+    typedef const volatile void type;
+};
+template<class Type> struct add_rvalue_reference { typedef Type &&type; };
+template<> struct add_rvalue_reference<void> { typedef void type; };
+template<> struct add_rvalue_reference<const void> { typedef const void type; };
+template<> struct add_rvalue_reference<volatile void> { typedef volatile void type; };
+template<> struct add_rvalue_reference<const volatile void> {
+    typedef const volatile void type;
+};
+template<class Type> struct is_lvalue_reference : false_type {};
+template<class Type> struct is_lvalue_reference<Type &> : true_type {};
+template<class Type> struct is_rvalue_reference : false_type {};
+template<class Type> struct is_rvalue_reference<Type &&> : true_type {};
+template<class Type> struct is_reference
+    : integral_constant<bool, is_lvalue_reference<Type>::value ||
+                              is_rvalue_reference<Type>::value> {};
+
+template<class Type> struct remove_pointer { typedef Type type; };
+template<class Type> struct remove_pointer<Type *> { typedef Type type; };
+template<class Type> struct remove_pointer<Type *const> { typedef Type type; };
+template<class Type> struct remove_pointer<Type *volatile> { typedef Type type; };
+template<class Type> struct remove_pointer<Type *const volatile> { typedef Type type; };
+template<class Type> struct add_pointer {
+    typedef typename remove_reference<Type>::type *type;
+};
+
+template<class Type> struct is_void
+    : is_same<void, typename remove_cv<Type>::type> {};
+template<class Type> struct is_pointer : false_type {};
+template<class Type> struct is_pointer<Type *> : true_type {};
+template<class Type> struct is_pointer<Type *const> : true_type {};
+template<class Type> struct is_pointer<Type *volatile> : true_type {};
+template<class Type> struct is_pointer<Type *const volatile> : true_type {};
+
+template<class Type> struct is_integral_base : false_type {};
+template<> struct is_integral_base<bool> : true_type {};
+template<> struct is_integral_base<char> : true_type {};
+template<> struct is_integral_base<signed char> : true_type {};
+template<> struct is_integral_base<unsigned char> : true_type {};
+template<> struct is_integral_base<short> : true_type {};
+template<> struct is_integral_base<unsigned short> : true_type {};
+template<> struct is_integral_base<int> : true_type {};
+template<> struct is_integral_base<unsigned int> : true_type {};
+template<> struct is_integral_base<long> : true_type {};
+template<> struct is_integral_base<unsigned long> : true_type {};
+template<> struct is_integral_base<long long> : true_type {};
+template<> struct is_integral_base<unsigned long long> : true_type {};
+template<> struct is_integral_base<wchar_t> : true_type {};
+template<> struct is_integral_base<char16_t> : true_type {};
+template<> struct is_integral_base<char32_t> : true_type {};
+template<class Type> struct is_integral
+    : is_integral_base<typename remove_cv<Type>::type> {};
+
+template<class Type> struct is_floating_point_base : false_type {};
+template<> struct is_floating_point_base<float> : true_type {};
+template<> struct is_floating_point_base<double> : true_type {};
+template<> struct is_floating_point_base<long double> : true_type {};
+template<class Type> struct is_floating_point
+    : is_floating_point_base<typename remove_cv<Type>::type> {};
+template<class Type> struct is_arithmetic
+    : integral_constant<bool, is_integral<Type>::value ||
+                              is_floating_point<Type>::value> {};
+template<class Type> struct is_fundamental
+    : integral_constant<bool, is_arithmetic<Type>::value ||
+                              is_void<Type>::value ||
+                              is_same<decltype(nullptr),
+                                      typename remove_cv<Type>::type>::value> {};
+
+template<class Type> struct is_array : false_type {};
+template<class Type, size_t Count> struct is_array<Type[Count]> : true_type {};
+template<class Type> struct is_array<Type[]> : true_type {};
+template<class Type> struct remove_extent { typedef Type type; };
+template<class Type, size_t Count> struct remove_extent<Type[Count]> {
+    typedef Type type;
+};
+template<class Type> struct remove_extent<Type[]> { typedef Type type; };
+
+template<class Type> struct is_enum : integral_constant<bool, __is_enum(Type)> {};
+template<class Type> struct is_union : integral_constant<bool, __is_union(Type)> {};
+template<class Type> struct is_class : integral_constant<bool, __is_class(Type)> {};
+template<class Base, class Derived> struct is_base_of
+    : integral_constant<bool, __is_base_of(Base, Derived)> {};
+template<class Type> struct is_empty : integral_constant<bool, __is_empty(Type)> {};
+template<class Type> struct is_polymorphic
+    : integral_constant<bool, __is_polymorphic(Type)> {};
+template<class Type> struct is_abstract
+    : integral_constant<bool, __is_abstract(Type)> {};
+template<class Type> struct is_final : integral_constant<bool, __is_final(Type)> {};
+
+template<class Type> struct is_function : false_type {};
+template<class Result, class... Args>
+struct is_function<Result(Args...)> : true_type {};
+template<class Result, class... Args>
+struct is_function<Result(Args..., ...)> : true_type {};
+
+template<class Type> struct decay {
+private:
+    typedef typename remove_reference<Type>::type raw_type;
+public:
+    typedef typename conditional<
+        is_array<raw_type>::value,
+        typename remove_extent<raw_type>::type *,
+        typename conditional<is_function<raw_type>::value,
+                             raw_type *,
+                             typename remove_cv<raw_type>::type>::type>::type type;
+};
+
+template<class Type> struct underlying_type {
+    typedef __underlying_type(Type) type;
+};
+
+template<class Type> struct is_trivial
+    : integral_constant<bool, __is_trivial(Type)> {};
+template<class Type> struct is_trivially_copyable
+    : integral_constant<bool, __is_trivially_copyable(Type)> {};
+template<class Type> struct is_standard_layout
+    : integral_constant<bool, __is_standard_layout(Type)> {};
+template<class Type, class... Args> struct is_constructible
+    : integral_constant<bool, __is_constructible(Type, Args...)> {};
+template<class Type> struct is_destructible
+    : integral_constant<bool, __is_destructible(Type)> {};
+template<class From, class To> struct is_convertible
+    : integral_constant<bool, __is_convertible(From, To)> {};
+
+template<class Type> struct make_signed;
+template<> struct make_signed<signed char> { typedef signed char type; };
+template<> struct make_signed<unsigned char> { typedef signed char type; };
+template<> struct make_signed<char> { typedef signed char type; };
+template<> struct make_signed<short> { typedef short type; };
+template<> struct make_signed<unsigned short> { typedef short type; };
+template<> struct make_signed<int> { typedef int type; };
+template<> struct make_signed<unsigned int> { typedef int type; };
+template<> struct make_signed<long> { typedef long type; };
+template<> struct make_signed<unsigned long> { typedef long type; };
+template<> struct make_signed<long long> { typedef long long type; };
+template<> struct make_signed<unsigned long long> { typedef long long type; };
+
+template<class Type> struct make_unsigned;
+template<> struct make_unsigned<signed char> { typedef unsigned char type; };
+template<> struct make_unsigned<unsigned char> { typedef unsigned char type; };
+template<> struct make_unsigned<char> { typedef unsigned char type; };
+template<> struct make_unsigned<short> { typedef unsigned short type; };
+template<> struct make_unsigned<unsigned short> { typedef unsigned short type; };
+template<> struct make_unsigned<int> { typedef unsigned int type; };
+template<> struct make_unsigned<unsigned int> { typedef unsigned int type; };
+template<> struct make_unsigned<long> { typedef unsigned long type; };
+template<> struct make_unsigned<unsigned long> { typedef unsigned long type; };
+template<> struct make_unsigned<long long> { typedef unsigned long long type; };
+template<> struct make_unsigned<unsigned long long> { typedef unsigned long long type; };
+
+template<class Type>
+typename add_rvalue_reference<Type>::type declval() noexcept;
+}
+
+#endif /* STC target */
+#endif

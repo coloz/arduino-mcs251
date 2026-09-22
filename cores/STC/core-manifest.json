@@ -1,0 +1,408 @@
+{
+  "schema_version": 2,
+  "api_version": 1,
+  "profile": "stc-arduino-cxx-v1-class-layer",
+  "qualification": "EXPERIMENTAL_MCS251_COMPILE_LINK",
+  "production_status": "EXPERIMENTAL_NOT_PRODUCTION_RELEASE",
+  "platform_cpp_enabled": true,
+  "platform_cpp_activation": "Always enabled for every supported board",
+  "implemented_target_profiles": {
+    "mcs251": {
+      "target_triple": "msp430-stc-none-eabi",
+      "data_layout": "E-m:e-p:24:8-i8:8-i16:8-i32:8-i64:8-i128:8-f32:8-f64:8-f128:8-a:8-n8:16:32-S8",
+      "ordinary_function_pointer_bytes": 3,
+      "data_member_pointer_bytes": 3,
+      "member_function_pointer_bytes": 6,
+      "member_pointer_codegen_integer_bits": 24,
+      "member_call_program_address_space": 0
+    }
+  },
+  "language": "gnu++11",
+  "required_compiler_flags": [
+    "-fno-exceptions",
+    "-fno-rtti",
+    "-fno-use-cxa-atexit",
+    "-fno-c++-static-destructors",
+    "-fno-threadsafe-statics"
+  ],
+  "required_defines": [
+    "STCXX_CPP_CORE=1",
+    "STCXX_ENFORCE_NO_EXCEPTIONS_RTTI=1",
+    "STCXX_TARGET_ABI=1"
+  ],
+  "required_one_of_defines": [
+    "STCXX_TARGET_MCS251=1"
+  ],
+  "target_endianness_defines": {
+    "STCXX_TARGET_MCS251": "STCXX_TARGET_ENDIAN_BIG=1"
+  },
+  "include_directories": [
+    ".",
+    "runtime/include"
+  ],
+  "public_header_contract": {
+    "public_include_directory": ".",
+    "compatibility_headers": [
+      "WCharacter.h",
+      "binary.h",
+      "WProgram.h"
+    ],
+    "compatibility_header_semantics": {
+      "WCharacter.h": "Arduino boolean character helpers backed by the target ctype surface; no Unicode contract",
+      "binary.h": "legacy B0 through B11111111 integer constants",
+      "WProgram.h": "pre-Arduino-1.0 source-compatibility include forwarding to Arduino.h"
+    },
+    "activation_condition": "defined(__cplusplus)",
+    "class_headers": [
+      "WString.h",
+      "Print.h",
+      "Stream.h",
+      "Printable.h",
+      "pgmspace.h",
+      "IPAddress.h",
+      "Client.h",
+      "Server.h",
+      "Udp.h",
+      "HardwareSerial.h",
+      "USBCDC.h"
+    ]
+  },
+  "sources": [
+    "WString.cpp",
+    "Print.cpp",
+    "Stream.cpp",
+    "IPAddress.cpp",
+    "HardwareSerial.cpp",
+    "runtime/src/stcxx_math.cpp",
+    "runtime/src/stcxx_itoa.cpp",
+    "runtime/src/stcxx_allocator.cpp",
+    "runtime/src/stcxx_runtime.cpp",
+    "runtime/src/stcxx_new.cpp",
+    "USB.cpp",
+    "USBCDC.cpp"
+  ],
+  "bundled_library_cpp_sources": [
+    "../../libraries/SPI/src/SPIClass.cpp",
+    "../../libraries/Wire/src/WireClass.cpp",
+    "../../libraries/SD/src/SDClass.cpp",
+    "../../libraries/SoftwareSerial/src/SoftwareSerialClass.cpp"
+  ],
+  "integration_requirements": [
+    "Expose the core root as the canonical Arduino public include directory",
+    "Only the Clang C++ frontend searches runtime/include; native C uses SDCC headers",
+    "Keep Arduino API implementations at the core root and native hardware implementations in hal",
+    "Give retained Wiring and hardware declarations extern-C linkage",
+    "SPI and Wire own their class headers inside their library src directories",
+    "Compile bundled library sources only when selected by the Arduino builder",
+    "Synchronize runtime/include and runtime/src from stcxx/sdk/runtime without local edits",
+    "Supply native C console hooks from hal/stcxx_console.c; the shared runtime must not depend on Arduino"
+  ],
+  "retained_c_hal_symbols": [
+    "millis",
+    "yield",
+    "Serial_begin",
+    "Serial_end",
+    "Serial_available",
+    "Serial_availableForWrite",
+    "Serial_peek",
+    "Serial_read",
+    "Serial_write",
+    "Serial_flush",
+    "Serial_overflow",
+    "SPI_begin",
+    "SPI_setPins",
+    "SPI_beginTransaction",
+    "SPI_setSettings",
+    "SPI_usingInterrupt",
+    "SPI_notUsingInterrupt",
+    "SPI_transfer",
+    "SPI_transferBuffer",
+    "SPI_endTransaction",
+    "SPI_end",
+    "Wire_begin",
+    "Wire_end",
+    "Wire_setPins",
+    "Wire_setClock",
+    "Wire_setClockStretchTimeout",
+    "Wire_setWireTimeout",
+    "Wire_getWireTimeoutFlag",
+    "Wire_clearWireTimeoutFlag",
+    "Wire_beginTransmission",
+    "Wire_write",
+    "Wire_endTransmission",
+    "Wire_endTransmissionStop",
+    "Wire_requestFrom",
+    "Wire_requestFromStop",
+    "Wire_requestFromInternal",
+    "Wire_available",
+    "Wire_peek",
+    "Wire_read"
+  ],
+  "spi_wire_limits": [
+    "software master implementations only",
+    "SPI transactions save/mask/restore registered interrupt enables; this is not a recursive mutex",
+    "SPI_CLOCK_DIV2 through SPI_CLOCK_DIV128 are literal divisor ratios and setClockDivider requests F_CPU/divisor from the software HAL; they are not AVR register encodings or a physical-clock guarantee",
+    "SPI using/notUsingInterrupt register INT0/INT1 masks or a global interrupt guard; attach/detachInterrupt remain compatibility no-ops because no hardware transfer-completion interrupt exists",
+    "Wire supports 7-bit controller addresses and configurable transmit/receive buffers, default 32 bytes each",
+    "Wire implements timeout flags, repeated-start reads, hardware slave begin(address), onReceive and onRequest; 10-bit addressing is not supported"
+  ],
+  "arduino_source_compatibility": {
+    "pulseIn_cpp_default_timeout_microseconds": 1000000,
+    "pulseInLong_cpp_default_timeout_microseconds": 1000000,
+    "hardware_serial_readBytes": {
+      "cpp": "inherited Stream::readBytes waits until length or the configurable timeout; default 1000 ms"
+    },
+    "software_serial_cpp": {
+      "constructor": "SoftwareSerial(receivePin, transmitPin, inverseLogic=false)",
+      "base": "Stream",
+      "backend": "one global active polling port shared by every object; simultaneous multi-instance receive is not provided",
+      "receive_servicing": "available/peek/read poll automatically; not background reception; default buffer 64 bytes or 16 on low-memory devices",
+      "ownership": "the last object whose begin or listen succeeds owns the backend; a previous object becomes inactive",
+      "inactive_object_behavior": "end and destruction do not stop the owner; reads/status/poll are neutral, flush is a no-op, and write fails without entering the HAL",
+      "rejected_activation": "complete configuration validation occurs before transfer, so a failed begin leaves the existing owner and backend unchanged"
+    },
+    "stepper_cpp_version": 5,
+    "liquidcrystal_stepper_instances": "per-C++-object C HAL state; C API retains its own default state; not ISR/thread-safe objects",
+    "liquidcrystal_initialization": "constructors record pins without using uninitialized Core timers; call begin/init after Core startup; public init rebinds pins and begins 16x1",
+    "liquidcrystal_row_offsets": "per-instance setRowOffsets; begin resets offsets from column count; no busy reads or dual-enable 40x4",
+    "sd_cpp": {
+      "path_overloads": [
+        "const char *",
+        "String"
+      ],
+      "begin_clock_argument": "selects the requested data clock after 100 kHz initialization; hardware divider or software fallback",
+      "availableForWrite": "INT_MAX for a valid writable file; zero otherwise; not a free-disk-space guarantee",
+      "file_write": "FAT16/32 short 8.3 paths, create/append/overwrite/flush/remove, recursive mkdir, empty rmdir, directory iteration and multiple file contexts; no sparse files or power-fail atomicity",
+      "mkdir_remove_rmdir": "short-name paths, recursive mkdir, ordinary-file remove, empty-directory rmdir and directory iteration are implemented"
+    }
+  },
+  "network_abstractions": {
+    "api_baseline": "ArduinoCore-API 1.5.2",
+    "headers": [
+      "IPAddress.h",
+      "Client.h",
+      "Server.h",
+      "Udp.h"
+    ],
+    "implementation": "IPv4/IPv6 IPAddress plus abstract transport interfaces",
+    "network_stack": "not provided"
+  },
+  "freestanding_headers": {
+    "c": [
+      "stddef.h",
+      "stdint.h",
+      "stdbool.h",
+      "limits.h",
+      "inttypes.h",
+      "stdio.h",
+      "stdlib.h",
+      "string.h",
+      "ctype.h",
+      "math.h"
+    ],
+    "cxx": [
+      "new",
+      "cstddef",
+      "cstdint",
+      "cstdlib",
+      "cstring",
+      "cctype",
+      "cmath",
+      "initializer_list",
+      "type_traits",
+      "utility",
+      "limits",
+      "algorithm"
+    ],
+    "host_behavior": "include_next to the host standard library",
+    "target_behavior": "minimal no-exception/no-RTTI declarations and templates for the STC Clang freestanding target"
+  },
+  "native_libc_boundary": {
+    "allocator_source": "runtime/src/stcxx_libc_abi.c",
+    "libc_wrapper_sources": [
+      "runtime/src/stcxx_libc_abi.c",
+      "runtime/src/stcxx_libc_calloc.c",
+      "runtime/src/stcxx_libc_realloc.c",
+      "runtime/src/stcxx_libc_memset.c",
+      "runtime/src/stcxx_libc_strchr.c",
+      "runtime/src/stcxx_libc_strrchr.c"
+    ],
+    "allocator_contract": "native malloc/calloc/realloc return values are converted to generic pointers before crossing into C++; MCS251 uses flat 24-bit pointers",
+    "string_contract": "native wrappers preserve the ISO int API for memset/strchr/strrchr and convert the byte arguments before calling SDCC",
+    "stdio_source": "runtime/src/stcxx_stdio.c",
+    "stdio_supported": "native bounded snprintf; sprintf from SDCC; printf/puts/putchar on initialized UART1; getchar blocks for UART1 input",
+    "stdio_limits": "installed SDCC format subset only; FILE, scanf, and Clang va_list entry points explicitly unavailable",
+    "math_source": "runtime/src/stcxx_math.cpp",
+    "math_contract": "binary32 double APIs bind to native *f symbols; fmodf/roundf/truncf/fminf/fmaxf implemented in Core; no hosted floating exception environment or blanket native libm numeric qualification",
+    "integer_format_source": "runtime/src/stcxx_itoa.cpp",
+    "integer_format_contract": "itoa/utoa/ltoa/ultoa support radix 2..36, unsigned conversion for nondecimal negatives, signed minima without overflow; invalid radix produces an empty string",
+    "console_adapter_source": "hal/stcxx_console.c"
+  },
+  "target_backend_requirements": {
+    "local_static_guard": {
+      "bytes": 1,
+      "thread_safe": false,
+      "code_generation": "direct i8 load/store under -fno-threadsafe-statics",
+      "cxa_guard_hooks_required_by_generated_code": false
+    },
+    "pgmspace_data_fallback": {
+      "enabled_when": "STCXX_FLASH_STRINGS=0",
+      "source_compatibility": [
+        "F",
+        "PSTR",
+        "PROGMEM",
+        "pgm_read_byte",
+        "pgm_read_word",
+        "pgm_read_dword",
+        "pgm_read_ptr",
+        "String(const __FlashStringHelper *)",
+        "Print::print(const __FlashStringHelper *)",
+        "Print::println(const __FlashStringHelper *)"
+      ],
+      "F_static_type": "const __FlashStringHelper *",
+      "F_overload_semantics": "selects canonical String and Print flash-helper overloads even though the fallback reads the underlying literal as ordinary data",
+      "external_flash_helper_values": "accepted by String and Print as ordinary data pointers, including third-party f_str-style return values",
+      "address_space": "ordinary generic data pointers",
+      "saves_ram": false,
+      "harvard_flash_qualifier": false
+    },
+    "complete_build_identity": [
+      "target",
+      "memory_model",
+      "stack-auto",
+      "xstack-policy",
+      "floating-model",
+      "address-space-model",
+      "member-pointer-layout",
+      "exceptions-rtti",
+      "abi-revision"
+    ],
+    "archive_sidecar_selection": {
+      "policy": "ctor-aware fixed-point selection from direct modules and actual native unresolved C ABI roots; identical anchored linkonce_odr/weak_odr COMDAT functions and globals coalesce exactly once; all other duplicate or ambiguous definitions fail closed",
+      "manifest_binding": "Native stcxx audit.json and manifest.json record the adapted C, optimized IR, final HEX and applicable constructor, alignment, storage and root-symbol audit results",
+      "implementation_source": "../stcxx/compiler/src/link.rs"
+    },
+    "arduino_cli_bridge_adapter": {
+      "scope": "Arduino CLI whole-program LLVM IR and LLVM-CBE fail-closed target adaptation",
+      "c_abi_preservation_policy": "exact-internalize-public-api-list-file",
+      "c_identifier_linkage_policy": "protect-declarations-and-noninternal-definitions",
+      "c_identifier_shortening_policy": "final-c-preprocessing-token-sha256-v1",
+      "max_emitted_c_identifier_length": 254,
+      "asxxxx_symbol_identity_max": 255,
+      "shortening_replacement_prefix": "stcxx_cbe_id_",
+      "shortening_hash_algorithm": "sha256",
+      "shortening_hash_domain": "stcxx-cbe-c-identifier-v1",
+      "build_manifest_binding": "Native stcxx audit.json and manifest.json record the adapted C, optimized IR, final HEX and applicable constructor, alignment, storage and root-symbol audit results",
+      "implementation_source": "../stcxx/compiler/src/adapter.rs"
+    },
+    "llvm_itanium_member_function_alignment": {
+      "policy": "Preserve every explicit LLVM align-2 function through LLVM-CBE and SDCC; member-function pointer targets must be a subset; select ASxxxx local parity from final relocation and require every final function address to be even",
+      "target_profiles": [
+        "mcs251"
+      ],
+      "alignment_bytes": 2,
+      "assembler_directives": [
+        ".even",
+        ".odd"
+      ],
+      "build_manifest_binding": "Native stcxx audit.json and manifest.json record the adapted C, optimized IR, final HEX and applicable constructor, alignment, storage and root-symbol audit results",
+      "implementation_source": "../stcxx/compiler/src/link.rs"
+    },
+    "arduino_cli_sdcc_warning_audit": {
+      "scope": "Arduino CLI generated C compilation diagnostics after the locked whole-program CBE audit",
+      "policy": "at most one source-located warning 357 is accepted, only for the exact ArduinoJson 7.4.3 DeserializationError::f_str two-level read-only pgm_read chain; all other source warnings and every ASxxxx address truncation fail closed",
+      "target_profiles": [
+        "mcs251"
+      ],
+      "max_verified_source_warning_count": 1,
+      "assembler_address_truncation_policy": "always-unexpected-hard-fail",
+      "implementation_source": "../stcxx/compiler/src/adapter.rs"
+    },
+    "arduino_cli_sdcc_gcse_workaround": {
+      "scope": "Arduino CLI LLVM-CBE generated bridge compilation only",
+      "policy": "Disable SDCC 4.6.0 GCSE exactly once for every generated whole-program C++ bridge on MCS251; native C and per-TU placeholder compilation retain normal optimization",
+      "affected_target_profiles": [
+        "mcs251"
+      ],
+      "required_sdcc_flag": "--nogcse",
+      "unaffected_compilation_paths": [
+        "native-c",
+        "cpp-placeholder-rel"
+      ],
+      "build_manifest_binding": "Native stcxx audit.json and manifest.json record the adapted C, optimized IR, final HEX and applicable constructor, alignment, storage and root-symbol audit results",
+      "implementation_source": "../stcxx/compiler/src/link.rs"
+    },
+    "llvm_cbe_fail_closed_adapter": {
+      "policy": "Only ArduinoJson 7.4.3 V743JB42 AllowAllFilter::operator[] with the exact one-byte integral_constant_OC_10 return definition, two-void-pointer C signature, three StructReturn uses, and an otherwise unused synthetic return alias may be zero-initialized; wrong type/shape/use/function pairings fail closed",
+      "standalone_source_project": "D:\\Git\\stc51\\stcxx",
+      "standalone_source_project_commit": "7f7127e65368eb4fb67c9f93cfb0ecd558ff456b",
+      "standalone_bridge_regression_sha256": "8d4ab2140b002754a56b7cbec2d32b3bb610fe1aa92cd9ac08baeea46e8b417d",
+      "published_out_lock_sha256": "99d94df0094dec600abebe6e4540425afcc19c407e3155a24be0035f7bc2b075",
+      "published_out_manifest_sha256": "1c2e7b0eba11884a91264eb2b313d2fd445f13ee30d2e44daed7a4321aa224d2",
+      "implementation_source": "../stcxx/compiler/src/adapter.rs"
+    },
+    "flash_strings": [
+      "STCXX_FLASH_STRINGS=1",
+      "STCXX_PGM_P",
+      "STCXX_PGM_VOID_P",
+      "STCXX_FLASH_READ_BYTE(pointer)",
+      "STCXX_PROGMEM"
+    ],
+    "runtime": [
+      "generated constructor bridge described by runtime/runtime-manifest.json",
+      "one target define: STCXX_TARGET_MCS251",
+      "allocator address-space implementation",
+      "throwing new/new[] failure notifies the OOM hook and then panics if it returns; nothrow failure returns null without invoking either hook"
+    ],
+    "allocator_telemetry": {
+      "contract": "runtime/runtime-manifest.json",
+      "snapshot_api": "stcxx_allocator_read_telemetry",
+      "snapshot_result": "six packed uint16_t fields: arena, initial total, current total, current largest, minimum total, minimum largest",
+      "sdcc_malloc_abi_source": "device/lib/malloc.c",
+      "sdcc_malloc_abi_source_sha256": "2649be26b08eeb4be411d52deb21864da91084d30c082a2674376fa9cef7ec7e",
+      "sdcc_malloc_abi_source_git_blob": "bc6f24625f7ed0959bef5c2fa18b056cbaaf786f",
+      "sdcc_malloc_abi_sources": {
+        "device/lib/malloc.c": {
+          "raw_sha256": "2649be26b08eeb4be411d52deb21864da91084d30c082a2674376fa9cef7ec7e",
+          "git_blob": "bc6f24625f7ed0959bef5c2fa18b056cbaaf786f"
+        },
+        "device/lib/mcs251/heap.h": {
+          "raw_sha256": "95dc3f1ab3cb956c214e0266de9d4c51648a8f40ca9174adf439e7b73767b280",
+          "git_blob": "570a7f5650147f8b101157ee2b4ec02b8a7be274"
+        },
+        "device/lib/_heap_init.c": {
+          "raw_sha256": "bcf1eeb505c089cb310398e0c6932e273df2b37acd913fa3598b10ffafa88c43",
+          "git_blob": "0dd3c49a5fc1cc6171d3c8a2033d554d6b89b83b"
+        }
+      },
+      "sampled_operations": [
+        "stcxx_malloc",
+        "stcxx_realloc"
+      ],
+      "excluded_operations": "third-party direct libc malloc/realloc/free calls",
+      "state_translation_unit": "cores/STC/runtime/src/stcxx_heap_state.c",
+      "optional_code_translation_unit": "cores/STC/runtime/src/stcxx_heap_telemetry.c",
+      "query_translation_unit": "cores/STC/runtime/src/stcxx_heap_query.c",
+      "state_storage": "8 bytes of XDATA in a separate archive member",
+      "link_accounting": "the heap-provider REL XSEG equals the configured arena; the state REL contributes exactly 8 additional XDATA bytes, defines no heap provider, and is selected exactly once",
+      "heap_map_provider_audit": {
+        "policy": "full symbol names are counted exactly in the REL object; only ASlink map display matching uses its fixed 32-character Global column, after proving all audited displays unique",
+        "implementation_source": "../stcxx/compiler/src/link.rs"
+      },
+      "qualification": "only allocations routed through the stcxx allocator ABI contribute to the reported low-water marks"
+    }
+  },
+  "layout": {
+    "public_api": ".",
+    "native_hardware": "hal",
+    "runtime_headers": "runtime/include",
+    "runtime_sources": "runtime/src",
+    "runtime_owner": "stcxx/sdk",
+    "bundled_library_interfaces": "../../libraries/<name>/src"
+  },
+  "api_compatibility": {
+    "baseline": "ArduinoCore-API 1.5.2",
+    "reference": "https://github.com/arduino/ArduinoCore-API/tree/1.5.2",
+    "scope": "Source and behavior compatibility for the tested portable API; target hardware and ABI limits remain explicit in COMPATIBILITY.md"
+  }
+}

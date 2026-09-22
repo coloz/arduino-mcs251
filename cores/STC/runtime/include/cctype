@@ -1,0 +1,34 @@
+#ifndef STCXX_FREESTANDING_CCTYPE
+#define STCXX_FREESTANDING_CCTYPE
+
+#if defined(__GNUC__) || defined(__clang__)
+# pragma GCC system_header
+#endif
+
+#if !defined(__STC_CLANG_IR_ONLY__)
+# if defined(__GNUC__) || defined(__clang__)
+#  include_next <cctype>
+# else
+#  error "The STC cctype shim needs either the STC target or include_next"
+# endif
+#else
+# include <ctype.h>
+namespace std {
+using ::isalnum;
+using ::isalpha;
+using ::isblank;
+using ::iscntrl;
+using ::isdigit;
+using ::isgraph;
+using ::islower;
+using ::isprint;
+using ::ispunct;
+using ::isspace;
+using ::isupper;
+using ::isxdigit;
+using ::tolower;
+using ::toupper;
+}
+#endif
+
+#endif

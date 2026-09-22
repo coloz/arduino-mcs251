@@ -1,0 +1,23 @@
+#ifndef STCXX_FREESTANDING_CSTDDEF
+#define STCXX_FREESTANDING_CSTDDEF
+
+#if defined(__GNUC__) || defined(__clang__)
+# pragma GCC system_header
+#endif
+
+#if !defined(__STC_CLANG_IR_ONLY__)
+# if defined(__GNUC__) || defined(__clang__)
+#  include_next <cstddef>
+# else
+#  error "The STC cstddef shim needs either the STC target or include_next"
+# endif
+#else
+# include <stddef.h>
+namespace std {
+using ::size_t;
+using ::ptrdiff_t;
+typedef decltype(nullptr) nullptr_t;
+}
+#endif
+
+#endif

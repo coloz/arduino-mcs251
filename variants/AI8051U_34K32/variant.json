@@ -1,0 +1,152 @@
+{
+  "schema_version": 2,
+  "as_of": "2026-09-13",
+  "model": "AI8051U-34K32",
+  "family": "AI8051U",
+  "selection": "mcs251_catalog",
+  "popularity_rank": null,
+  "compiler_target": "mcs251",
+  "experimental_compiler_target": true,
+  "experimental_compiler_targets": [
+    "mcs251"
+  ],
+  "memory": {
+    "flash_bytes": 32768,
+    "maximum_code_bytes": 32768,
+    "idata_bytes": 256,
+    "xdata_bytes": 32768,
+    "edata_bytes": 2048,
+    "flash_origin": "0xff0000",
+    "linker_layout": "post_home_contiguous",
+    "code_origin": "0xff0000"
+  },
+  "pinout": {
+    "encoding": "(port << 4) | bit",
+    "maximum_logical_io": 46,
+    "maximum_physical_io": 45,
+    "physical_alias_groups": [
+      [
+        "P4.4",
+        "P4.5"
+      ]
+    ],
+    "port_masks": [
+      "0xFF",
+      "0xFF",
+      "0xFF",
+      "0xFF",
+      "0xFF",
+      "0xCF",
+      "0x00",
+      "0x00",
+      "0x00",
+      "0x00",
+      "0x00",
+      "0x00"
+    ],
+    "package_dependent": true,
+    "startup_selector": null,
+    "analog_aliases_enabled": true,
+    "separate_pullup": false
+  },
+  "peripherals": {
+    "pwm_layout": 2,
+    "memory_timing_layout": 1,
+    "bus_layout": 0,
+    "usb_layout": 1,
+    "can_layout": 0,
+    "wire_layout": 0,
+    "uart1": true,
+    "uart1_buffered_rx": true,
+    "timer0_clock_divider": null,
+    "adc": {
+      "supported": true,
+      "layout": "modern_bc_adccfg",
+      "native_resolution_bits": 12,
+      "arduino_default_resolution_bits": 10,
+      "reference_modes": [
+        "DEFAULT"
+      ],
+      "channels": [
+        {
+          "alias": "A0",
+          "pin": "P1.0",
+          "channel": 0
+        },
+        {
+          "alias": "A1",
+          "pin": "P1.1",
+          "channel": 1
+        },
+        {
+          "alias": "A2",
+          "pin": "P1.2",
+          "channel": 2
+        },
+        {
+          "alias": "A3",
+          "pin": "P1.3",
+          "channel": 3
+        },
+        {
+          "alias": "A4",
+          "pin": "P1.4",
+          "channel": 4
+        },
+        {
+          "alias": "A5",
+          "pin": "P1.5",
+          "channel": 5
+        },
+        {
+          "alias": "A6",
+          "pin": "P1.6",
+          "channel": 6
+        },
+        {
+          "alias": "A7",
+          "pin": "P1.7",
+          "channel": 7
+        },
+        {
+          "alias": "A8",
+          "pin": "P0.0",
+          "channel": 8
+        },
+        {
+          "alias": "A9",
+          "pin": "P0.1",
+          "channel": 9
+        },
+        {
+          "alias": "A10",
+          "pin": "P0.2",
+          "channel": 10
+        },
+        {
+          "alias": "A11",
+          "pin": "P0.3",
+          "channel": 11
+        },
+        {
+          "alias": "A12",
+          "pin": "P0.4",
+          "channel": 12
+        },
+        {
+          "alias": "A13",
+          "pin": "P0.5",
+          "channel": 13
+        },
+        {
+          "alias": "A14",
+          "pin": "P0.6",
+          "channel": 14
+        }
+      ]
+    }
+  },
+  "official_product_page": "https://www.stcmicro.com/datasheet/Ai8051U_Features.pdf",
+  "caveat": "Verify the concrete package pinout; unavailable pins are rejected by the core masks.",
+  "data_quality_note": "Program Flash in MCS251 Source mode is 0xFF0000-0xFF7FFF; reset remains at 0xFF0000. Program size must not include the remaining EEPROM region. Only MCS251 is supported. The experimental C++11 core profile is exposed at 12 MHz; exact-QEMU qualification is tracked separately. Clock options are conservatively limited to 12 and 24 MHz and must match ISP settings. The 46 logical port names represent 45 physical pads; P4.4/P4.5 remain aliases. DATA/IDATA is a compatibility view of EDATA in MCS251 mode."
+}

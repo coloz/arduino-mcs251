@@ -1,0 +1,72 @@
+#ifndef STCXX_FREESTANDING_UTILITY
+#define STCXX_FREESTANDING_UTILITY
+
+#if defined(__GNUC__) || defined(__clang__)
+# pragma GCC system_header
+#endif
+
+#if !defined(__STC_CLANG_IR_ONLY__)
+# if defined(__GNUC__) || defined(__clang__)
+#  include_next <utility>
+# else
+#  error "The STC utility shim needs either the STC target or include_next"
+# endif
+#else
+
+#include <type_traits>
+
+namespace std {
+template<class Type>
+typename remove_reference<Type>::type &&move(Type &&value)
+{
+    return static_cast<typename remove_reference<Type>::type &&>(value);
+}
+
+template<class Type>
+Type &&forward(typename remove_reference<Type>::type &value)
+{
+    return static_cast<Type &&>(value);
+}
+
+template<class Type>
+Type &&forward(typename remove_reference<Type>::type &&value)
+{
+    static_assert(!is_lvalue_reference<Type>::value,
+                  "cannot forward an rvalue as an lvalue");
+    return static_cast<Type &&>(value);
+}
+
+template<class Type>
+void swap(Type &left, Type &right)
+{
+    Type temporary(move(left));
+    left = move(right);
+    right = move(temporary);
+}
+
+template<class First, class Second>
+struct pair {
+    typedef First first_type;
+    typedef Second second_type;
+    First first;
+    Second second;
+
+    pair() : first(), second() {}
+    pair(const First &left, const Second &right) : first(left), second(right) {}
+    template<class OtherFirst, class OtherSecond>
+    pair(OtherFirst &&left, OtherSecond &&right)
+        : first(forward<OtherFirst>(left)), second(forward<OtherSecond>(right)) {}
+};
+
+template<class First, class Second>
+pair<typename decay<First>::type, typename decay<Second>::type>
+make_pair(First &&first, Second &&second)
+{
+    typedef pair<typename decay<First>::type,
+                 typename decay<Second>::type> result_type;
+    return result_type(forward<First>(first), forward<Second>(second));
+}
+}
+
+#endif /* STC target */
+#endif

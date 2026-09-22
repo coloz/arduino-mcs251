@@ -1,0 +1,103 @@
+# arduino-mcs251 C++ core and platform.
+# See README.md and tools/stcxx-driver/README.md for compiler usage and support boundaries.
+
+name=mcs251
+version=0.0.9
+
+compiler.warning_flags=--less-pedantic --stcxx-warnings=default
+compiler.warning_flags.none=--less-pedantic --stcxx-warnings=none
+compiler.warning_flags.default=--less-pedantic --stcxx-warnings=default
+compiler.warning_flags.more=--less-pedantic --stcxx-warnings=more -Wp-Wall
+compiler.warning_flags.all=--less-pedantic --stcxx-warnings=all -Wp-Wall
+
+compiler.path={runtime.platform.path}/tools/stcxx-driver/
+compiler.driver={compiler.path}{compiler.cpp.cmd}
+compiler.backend.path={runtime.tools.stcxx-toolchain.path}/sdcc/bin
+compiler.backend.c.cmd=sdcc
+compiler.backend.ar.cmd=sdar
+
+compiler.c.cmd=stcxx
+compiler.c.cmd.windows=stcxx.exe
+compiler.dep.flags=-MMD
+compiler.c.flags=-c --std-sdcc11 --opt-code-size -Ddouble=float -DSTC_CORE_REVISION=20260922 -DSTC_CORE_LAYOUT=2 --model-{build.memory_model} {compiler.warning_flags} {build.flash_flags}
+compiler.c.elf.cmd=stcxx
+compiler.c.elf.cmd.windows=stcxx.exe
+compiler.c.elf.flags=--code-size {upload.maximum_size} --xram-size {upload.maximum_xdata_size} {build.xram_flags} --model-{build.memory_model} {build.link_flags} {build.flash_flags}
+
+# Every board uses the locked native Clang/LLVM-CBE bridge for C++ and
+# the shared SDCC backend for C hardware drivers, with the MCS251 ABI.
+compiler.cpp.cmd=stcxx
+compiler.cpp.cmd.windows=stcxx.exe
+compiler.cpp.flags={compiler.c.flags}
+
+compiler.S.flags={compiler.warning_flags}
+compiler.ar.cmd=stcxx
+compiler.ar.cmd.windows=stcxx.exe
+compiler.size.cmd=stcxx
+compiler.size.cmd.windows=stcxx.exe
+compiler.ar.flags=rcs
+compiler.systemincludes="-I{runtime.tools.stcxx-toolchain.path}/sdcc/include" "-I{runtime.tools.stcxx-toolchain.path}/sdcc/include/mcs51"
+
+build.extra_flags=
+build.usb_flags=
+build.xram_flags=
+build.link_flags=
+build.flash_flags=
+build.cpp_core_flags=
+build.cpp_link_flags=
+build.cpp_target_link_flags=
+compiler.c.extra_flags=
+compiler.c.elf.extra_flags=
+compiler.cpp.extra_flags=
+compiler.S.extra_flags=
+compiler.ar.extra_flags=
+compiler.libraries.ldflags=
+
+
+recipe.c.o.pattern="{compiler.driver}" --platform "{runtime.platform.path}" compile-unit "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{object_file}" re1 {compiler.dep.flags} {compiler.c.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.c.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
+
+recipe.cpp.o.pattern="{compiler.driver}" --platform "{runtime.platform.path}" compile-unit "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{object_file}" re2 {compiler.dep.flags} {compiler.cpp.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.cpp.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
+
+recipe.S.o.pattern="{compiler.driver}" --platform "{runtime.platform.path}" compile-unit "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{object_file}" re3 {compiler.S.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.S.extra_flags} {build.extra_flags} {includes}
+
+# The native driver packages Arduino core cache sidecars with the SDAR archive.
+recipe.ar.pattern="{compiler.driver}" archive-unit "{archive_file_path}" "{object_file}"
+
+recipe.c.combine.pattern="{compiler.driver}" --platform "{runtime.platform.path}" link-units "{compiler.backend.path}/{compiler.backend.c.cmd}" {build.target} {compiler.c.elf.flags} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.cpp_link_flags} {build.cpp_target_link_flags} {compiler.c.elf.extra_flags} {build.extra_flags} {object_files} "{build.path}/{archive_file}" {compiler.libraries.ldflags} --out-fmt-ihx -o "{build.path}/{build.project_name}.elf"
+
+recipe.output.tmp_file={build.project_name}.hex
+recipe.output.save_file={build.project_name}.{build.variant}.hex
+
+# SDCC writes a human-readable .mem file next to the Intel HEX output. The
+# native driver includes internal DATA/IDATA usage as well as PDATA and XDATA.
+recipe.size.pattern="{compiler.driver}" --platform "{runtime.platform.path}" size "{build.path}/{build.project_name}.mem"
+recipe.size.regex=^STC_PROGRAM_BYTES ([0-9]+)$
+recipe.size.regex.data=^STC_RAM_BYTES ([0-9]+)$
+recipe.advanced_size.pattern="{compiler.driver}" --platform "{runtime.platform.path}" advanced-size "{build.path}/{build.project_name}.mem"
+
+# Arduino CLI/IDE library discovery and prototype generation.
+preproc.includes.flags=-M -MG -MP
+recipe.preproc.includes="{compiler.driver}" --platform "{runtime.platform.path}" compile "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{preprocessed_file_path}" re11 {preproc.includes.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.cpp.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
+preproc.macros.flags=-E -dM
+recipe.preproc.macros="{compiler.driver}" --platform "{runtime.platform.path}" compile "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{preprocessed_file_path}" re12 {preproc.macros.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.cpp.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
+
+# The IDE's Upload action uses the host-native programmer installed by Boards Manager.
+tools.stc-cli.path={runtime.tools.stc-cli.path}
+tools.stc-cli.cmd.path={path}/stc-cli
+tools.stc-cli.cmd.path.windows={path}/stc-cli.exe
+# IDE verbose output shows the upload command, not raw ISP packets.
+# Protocol traces remain available through the standalone stc-cli --debug flag.
+tools.stc-cli.upload.params.verbose=
+tools.stc-cli.upload.params.quiet=
+tools.stc-cli.upload.pattern="{cmd.path}" flash --port "{serial.port}" --transport {upload.transport} --expect "{upload.model}" --file "{build.path}/{build.project_name}.hex" --execution-mode mcs251 --allow-experimental {upload.model_check_flags} --reset manual --baud {upload.speed} --wait 60 {upload.verbose}
+
+# The manually entered factory HID loader has no COM port.
+tools.stc-cli-usb.path={runtime.tools.stc-cli.path}
+tools.stc-cli-usb.cmd.path={path}/stc-cli
+tools.stc-cli-usb.cmd.path.windows={path}/stc-cli.exe
+tools.stc-cli-usb.upload.params.verbose=
+tools.stc-cli-usb.upload.params.quiet=
+tools.stc-cli-usb.upload.pattern="{cmd.path}" usb flash --expect "{upload.model}" --file "{build.path}/{build.project_name}.hex" --execution-mode mcs251 --allow-experimental --wait 60 {upload.verbose}
+# Standard recipe hooks supported by Arduino CLI and unmodified aily-builder.
+recipe.hooks.prebuild.1.pattern="{compiler.driver}" prepare-sketch "{build.path}" "{build.source.path}"
+recipe.objcopy.hex.pattern="{compiler.driver}" export-hex "{build.path}/{build.project_name}.elf" "{build.path}/{build.project_name}.hex"

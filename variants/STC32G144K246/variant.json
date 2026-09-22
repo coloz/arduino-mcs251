@@ -1,0 +1,135 @@
+{
+  "schema_version": 2,
+  "as_of": "2026-09-13",
+  "model": "STC32G144K246",
+  "family": "STC32G",
+  "selection": "rising",
+  "popularity_rank": null,
+  "compiler_target": "mcs251",
+  "experimental_compiler_target": true,
+  "experimental_compiler_targets": [
+    "mcs251"
+  ],
+  "memory": {
+    "flash_bytes": 251904,
+    "maximum_code_bytes": 251904,
+    "idata_bytes": 0,
+    "xdata_bytes": 131072,
+    "edata_bytes": 16384,
+    "usb_ram_bytes": 5760,
+    "executable_ram_bytes": 4096,
+    "flash_origin": "0xfc2800",
+    "linker_layout": "segmented_home",
+    "code_origin": "0xff0000",
+    "gsinit0_origin": "0xfc2800"
+  },
+  "pinout": {
+    "encoding": "(port << 4) | bit",
+    "maximum_logical_io": 92,
+    "maximum_physical_io": 91,
+    "physical_alias_groups": [
+      [
+        "P1.3",
+        "P1.7"
+      ]
+    ],
+    "port_masks": [
+      "0xFF",
+      "0xFB",
+      "0xFF",
+      "0xFF",
+      "0xFF",
+      "0x1F",
+      "0xFF",
+      "0xFF",
+      "0xFF",
+      "0xFF",
+      "0xFF",
+      "0xFF"
+    ],
+    "package_dependent": true,
+    "startup_selector": null,
+    "analog_aliases_enabled": true,
+    "separate_pullup": true
+  },
+  "peripherals": {
+    "pwm_layout": 1,
+    "memory_timing_layout": 2,
+    "bus_layout": 0,
+    "usb_layout": 2,
+    "can_layout": 2,
+    "wire_layout": 2,
+    "uart1": true,
+    "uart1_buffered_rx": true,
+    "timer0_clock_divider": 12,
+    "adc": {
+      "supported": true,
+      "layout": "modern_bc_adccfg",
+      "native_resolution_bits": 12,
+      "arduino_default_resolution_bits": 10,
+      "reference_modes": [
+        "DEFAULT"
+      ],
+      "channels": [
+        {
+          "alias": "A0",
+          "pin": "P1.0",
+          "channel": 0
+        },
+        {
+          "alias": "A1",
+          "pin": "P1.1",
+          "channel": 1
+        },
+        {
+          "alias": "A2",
+          "pin": "P5.4",
+          "channel": 2
+        },
+        {
+          "alias": "A3",
+          "pin": "P1.3",
+          "channel": 3
+        },
+        {
+          "alias": "A4",
+          "pin": "P1.4",
+          "channel": 4
+        },
+        {
+          "alias": "A5",
+          "pin": "P1.5",
+          "channel": 5
+        },
+        {
+          "alias": "A6",
+          "pin": "P1.6",
+          "channel": 6
+        },
+        {
+          "alias": "A7",
+          "pin": "P1.7",
+          "channel": 7
+        },
+        {
+          "alias": "A8",
+          "pin": "P0.0",
+          "channel": 8
+        },
+        {
+          "alias": "A9",
+          "pin": "P0.1",
+          "channel": 9
+        },
+        {
+          "alias": "A10",
+          "pin": "P0.2",
+          "channel": 10
+        }
+      ]
+    }
+  },
+  "official_product_page": "https://www.stcmicro.com/stc/stc32g144k246.html",
+  "caveat": "Verify the concrete package pinout; unavailable pins are rejected by the core masks.",
+  "data_quality_note": "The chip has 251,904 bytes of physical user Flash at 0xFC2800-0xFFFFFF. The segmented_home layout retains GSINIT0 at 0xFC2800 and reset HOME at 0xFF0000, placing function and read-only data sections in the available intervals around HOME. maximum_code_bytes includes startup and vector bytes and equals the complete physical program Flash. This layout requires the rebuilt SDCC/ASlink toolchain with --function-sections, --data-sections and --code-window support; historical 182 KiB firmware qualification does not establish full-Flash hardware qualification. The maximum package exposes 92 logical port names on 91 physical GPIO pads because P1.3 and P1.7 share one pad. P1.2 is intentionally omitted in favor of the canonical P5.4 name for its shared pad and ADC1 channel 2. Arduino analog aliases currently expose ADC1 external channels 0 through 10 only; ADC2 and the internal reference channel are outside this variant mapping. The 256-byte DATA/IDATA compatibility window is part of EDATA and is not counted a second time. The separately mapped 4 KiB executable RAM and 5,760-byte USB endpoint FIFO are reported but are not added to the normal heap. CPU options above 48 MHz remain hidden until the PLL startup path is implemented and hardware-validated."
+}

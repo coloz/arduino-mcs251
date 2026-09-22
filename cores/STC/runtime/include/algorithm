@@ -1,0 +1,81 @@
+#ifndef STCXX_FREESTANDING_ALGORITHM
+#define STCXX_FREESTANDING_ALGORITHM
+
+#if defined(__GNUC__) || defined(__clang__)
+# pragma GCC system_header
+#endif
+
+#if !defined(__STC_CLANG_IR_ONLY__)
+# if defined(__GNUC__) || defined(__clang__)
+#  include_next <algorithm>
+# else
+#  error "The STC algorithm shim needs either the STC target or include_next"
+# endif
+#else
+
+#include <utility>
+
+/* Arduino.h exposes min/max as function-like macros.  Hide them while this
+ * header declares std::min/std::max, then restore the sketch-visible API. */
+#if defined(min)
+# pragma push_macro("min")
+# undef min
+# define STCXX_ALGORITHM_RESTORE_MIN 1
+#endif
+#if defined(max)
+# pragma push_macro("max")
+# undef max
+# define STCXX_ALGORITHM_RESTORE_MAX 1
+#endif
+
+namespace std {
+template<class Type>
+const Type &min(const Type &left, const Type &right)
+{
+    return right < left ? right : left;
+}
+
+template<class Type>
+const Type &max(const Type &left, const Type &right)
+{
+    return left < right ? right : left;
+}
+
+template<class Input, class Output>
+Output copy(Input first, Input last, Output destination)
+{
+    while (first != last) {
+        *destination++ = *first++;
+    }
+    return destination;
+}
+
+template<class Forward, class Type>
+void fill(Forward first, Forward last, const Type &value)
+{
+    while (first != last) {
+        *first++ = value;
+    }
+}
+
+template<class Forward, class Size, class Type>
+Forward fill_n(Forward first, Size count, const Type &value)
+{
+    while (count-- > 0) {
+        *first++ = value;
+    }
+    return first;
+}
+}
+
+#if defined(STCXX_ALGORITHM_RESTORE_MAX)
+# pragma pop_macro("max")
+# undef STCXX_ALGORITHM_RESTORE_MAX
+#endif
+#if defined(STCXX_ALGORITHM_RESTORE_MIN)
+# pragma pop_macro("min")
+# undef STCXX_ALGORITHM_RESTORE_MIN
+#endif
+
+#endif /* STC target */
+#endif

@@ -1,0 +1,53 @@
+#ifndef STCXX_FREESTANDING_INITIALIZER_LIST
+#define STCXX_FREESTANDING_INITIALIZER_LIST
+
+#if defined(__GNUC__) || defined(__clang__)
+# pragma GCC system_header
+#endif
+
+#if !defined(__STC_CLANG_IR_ONLY__)
+# if defined(__GNUC__) || defined(__clang__)
+#  include_next <initializer_list>
+# else
+#  error "The STC initializer_list shim needs either the STC target or include_next"
+# endif
+#else
+# include <stddef.h>
+namespace std {
+template<class Element>
+class initializer_list {
+public:
+    typedef Element value_type;
+    typedef const Element &reference;
+    typedef const Element &const_reference;
+    typedef size_t size_type;
+    typedef const Element *iterator;
+    typedef const Element *const_iterator;
+
+    constexpr initializer_list() : _begin(0), _size(0u) {}
+    constexpr size_t size() const { return _size; }
+    constexpr const Element *begin() const { return _begin; }
+    constexpr const Element *end() const { return _begin + _size; }
+
+private:
+    constexpr initializer_list(const Element *begin, size_t size)
+        : _begin(begin), _size(size) {}
+    const Element *_begin;
+    size_t _size;
+};
+
+template<class Element>
+constexpr const Element *begin(initializer_list<Element> values)
+{
+    return values.begin();
+}
+
+template<class Element>
+constexpr const Element *end(initializer_list<Element> values)
+{
+    return values.end();
+}
+}
+#endif
+
+#endif

@@ -1,0 +1,76 @@
+#ifndef STCXX_FREESTANDING_CMATH
+#define STCXX_FREESTANDING_CMATH
+
+#if defined(__GNUC__) || defined(__clang__)
+# pragma GCC system_header
+#endif
+
+#if !defined(__STC_CLANG_IR_ONLY__)
+# if defined(__GNUC__) || defined(__clang__)
+#  include_next <cmath>
+# else
+#  error "The STC cmath shim needs either the STC target or include_next"
+# endif
+#else
+# include <math.h>
+namespace std {
+using ::acos;
+using ::asin;
+using ::atan;
+using ::atan2;
+using ::cos;
+using ::sin;
+using ::tan;
+using ::cosh;
+using ::sinh;
+using ::tanh;
+using ::exp;
+using ::frexp;
+using ::ldexp;
+using ::log;
+using ::log10;
+using ::modf;
+using ::pow;
+using ::sqrt;
+using ::ceil;
+using ::fabs;
+using ::floor;
+using ::fmod;
+using ::fmin;
+using ::fmax;
+using ::round;
+using ::trunc;
+using ::acosf;
+using ::asinf;
+using ::atanf;
+using ::atan2f;
+using ::cosf;
+using ::sinf;
+using ::tanf;
+using ::coshf;
+using ::sinhf;
+using ::tanhf;
+using ::expf;
+using ::frexpf;
+using ::ldexpf;
+using ::logf;
+using ::log10f;
+using ::modff;
+using ::powf;
+using ::sqrtf;
+using ::ceilf;
+using ::fabsf;
+using ::floorf;
+using ::fmodf;
+using ::fminf;
+using ::fmaxf;
+using ::roundf;
+using ::truncf;
+using ::isfinite;
+using ::isinf;
+using ::isnan;
+using ::signbit;
+}
+#endif
+
+#endif

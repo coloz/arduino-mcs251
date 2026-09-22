@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "host": "darwin-arm64",
+  "tools": {
+    "clang": {
+      "version": "20.1.8",
+      "patch_sha256": "f8fda423712d808dd087d4e789b1e824911cde62d738078bf9325a898d8476c0",
+      "patched_source_normalized_sha256": {
+        "include/clang/Basic/TargetInfo.h": "23ade7d95b1a7497f20b1bcfa8823c33ecb72087c1c0aa05dc52020a96aad289",
+        "lib/AST/ASTContext.cpp": "83e17d363bfebaa63486d107b28c6b6cd531dd4fb307a75db6ae9fac9ae09ee3",
+        "lib/AST/ItaniumCXXABI.cpp": "4af3f218d0e4d3838b65acda2f0f400a659d297e6b2264dc3eed0e892abb59fa",
+        "lib/Basic/Targets/MSP430.cpp": "8650ce2fb14da7f7f6d72e49297ed34a99843834bfc7d3b1cc082ef7c02eb83a",
+        "lib/Basic/Targets/MSP430.h": "c66b7aa1ef9567806ac619c074b25ce6226cb6c69ae340ef864bc09e55906514",
+        "lib/CodeGen/BackendUtil.cpp": "5390b53f2a35534b5c65b0aa3c93c5d294de43922567718636e0930ff4f68c39",
+        "lib/CodeGen/CGCall.cpp": "bc9cec92964a15a0e7140168c045b8b7bca8ff11a858cf989d556f38bdd92893",
+        "lib/CodeGen/CGExprScalar.cpp": "9e3eb4a610e6ff73c10dd45e4145b1d301d685ffc8517a8b6e0d9b39c11b2904",
+        "lib/CodeGen/CGVTables.cpp": "a28dfce56a93f74a7511f1eef7e369d8a7e51245c80831a8b0092c14fa20fa53",
+        "lib/CodeGen/CodeGenModule.cpp": "c7af4286b9acd14f5d81111ae708aa8abbd7b16b7c2131c4fe758b47f86d8d61",
+        "lib/CodeGen/CodeGenModule.h": "b556fcf113c24ce29c7f303f0a19fcfebe93b421bf1e87b21ba8bae0cd6ccbf2",
+        "lib/CodeGen/CodeGenTypeCache.h": "5da5e393f30104f121ac94bb131a70411b65ff99b7519bacb0ee2126d5e20cd1",
+        "lib/CodeGen/ItaniumCXXABI.cpp": "299449910e285455679d28db550a1f058904027b867e814d92869b199da9f3d5",
+        "lib/Driver/ToolChains/Clang.cpp": "2e53d79ee3d3c23ee3f792c5d21fe0dcdf7e41f1214141a7cca0e927241f4f56"
+      },
+      "dual_target_regression_sha256": "96591c481d69e29ee1fd0763e6a0306811bd39f5f1ec64b8030d0ce03f02bc9f",
+      "dual_target_probe_sha256": {
+        "mcs51_target_info_probe.cpp": "1399b4266fa46054b1f7bb490e64b63037c506e878eb5825d4ff1cc679eebfb6",
+        "target_info_probe.cpp": "a21c98d3dace9247e4922d65a24d4414eaf697a43ad7021c5eb41d3e4e63c1dd",
+        "stock_msp430_probe.cpp": "c8f3c0d3d2ba62bbd1f15896c0da52bb14e802f0fcc3a615ff69356bf51d3cc8",
+        "stock_relative_vtable_probe.cpp": "7d2a46a447d298324f37207457d676e326e23f82c3f902d4ca0748f556fb31ae"
+      },
+      "sha256": "204a41c057ea397ce16398c6fa1ae3289c3c28d7e42f1b24b24d03298eeeec98",
+      "shared_library_sha256": "e79c92884e0296c0062e21641aecde34abf85bec4af7fc6d5b1e021ae5c1c9f5"
+    },
+    "llvm_link": {
+      "sha256": "713b3aa77433d3f80026662265cf2a55caf4feb51893346d3bca135f6b963999"
+    },
+    "opt": {
+      "sha256": "fbf9e04cf609a8b8cf65751aee8f17fb05a9024810b80b74f1ecba330ff3d90f"
+    },
+    "llvm_dis": {
+      "sha256": "4d47a5fca400953c299697cf09294109059fe6a1f29290bbea33dcc448d417f7"
+    },
+    "llvm_cbe": {
+      "patch_sha256": "eb9687ce401a3f95c53c424f8af7c1c1a4ceca76be734812148ef18e6948fdf7",
+      "sha256": "0e21cfcd49596efa0dc3a8fe7ea050f63d0237db940a320d2fef6dcd95cf531b"
+    },
+    "sdcc": {
+      "version_prefix": "SDCC : mcs51/mcs251 TD- 4.6.0",
+      "malloc_abi_source_sha256": "2649be26b08eeb4be411d52deb21864da91084d30c082a2674376fa9cef7ec7e",
+      "standalone_bridge_adapter_sha256": "faf8c44e22c09037d29f9332941c6dcf8d8a4236148fd94020ca0264c5665ad5",
+      "standalone_bridge_regression_sha256": "8d4ab2140b002754a56b7cbec2d32b3bb610fe1aa92cd9ac08baeea46e8b417d",
+      "patch_sha256": "310d5d53f3cf246ea34b18bad44a868cb7dcd8f55faab317f5505da30747ef2d",
+      "sha256": "aa65e3e06d7f1e3330d05dbd22d389357372c1acee4b61d8fa8366a7fab9d5dc",
+      "elf_sha256": "aa65e3e06d7f1e3330d05dbd22d389357372c1acee4b61d8fa8366a7fab9d5dc",
+      "preprocessor_patch_sha256": "4d8bd5eb8e12b55a0f47f79a3ff76a1e09c1871675cbcb291607bd51b72fbe46"
+    },
+    "sdar": {
+      "sha256": "9c801d1b8249db85955828f89f6cabd6413c88d87b2a7d18bf5dff322fd2fd9f"
+    },
+    "sdas251": {
+      "sha256": "ba6bbc7938116e8c42b83588bcd11e04aac23660209edb7e7ba0cc73fbf11d5f"
+    },
+    "sdld": {
+      "sha256": "52c7a057749fb5af495695e57b917238b038acd703bea03cb35d0bd899d9b383"
+    },
+    "sdldmcs251": {
+      "sha256": "caa9c458b60fc30ef333517ec6d908f3178fe4d4bf4d384c362fde4a5d7cf0a0"
+    },
+    "sdcpp": {
+      "sha256": "532adb7f7e9ad5f9891074f417a349a4b43105837ca016e231fa6603a612b983"
+    },
+    "sdcc_inputs": {
+      "libsdcc_sha256": "d8387b753220462e019a62b8f4c70f786ab59b3cfac45e2c1a9935832de47ac5",
+      "mcs251_sha256": "43fb5aa8cf703f3ad93aa1993906244c5309709afd355d6d28912ce9d1b41d22",
+      "stddef_sha256": "5ef86cd924d140f80152f0e5463c605e43855b0d23e5692ccda93469470d4a9d",
+      "stdint_sha256": "7275e563d168934bb86333bd3e4a072946da43480c3f711c19e1ea2f1169a435"
+    }
+  },
+  "targets": {
+    "mcs251": {
+      "target_triple": "msp430-stc-none-eabi",
+      "data_layout": "E-m:e-p:24:8-i8:8-i16:8-i32:8-i64:8-i128:8-f32:8-f64:8-f128:8-a:8-n8:16:32-S8",
+      "abi_identity_symbol": "__stcxx_abi_stc_arduino_cxx_v1_mcs251_be_size4_pdiff4_ptr3_fnptr3_guard1_direct",
+      "ordinary_function_pointer_bytes": 3,
+      "function_reference_storage_bytes": 3,
+      "data_member_pointer_bytes": 3,
+      "member_function_pointer_bytes": 6,
+      "member_pointer_codegen_integer_bits": 24,
+      "member_call_program_address_space": 0,
+      "sdcc_inputs": {
+        "libsdcc_sha256": "d8387b753220462e019a62b8f4c70f786ab59b3cfac45e2c1a9935832de47ac5",
+        "target_runtime_sha256": "43fb5aa8cf703f3ad93aa1993906244c5309709afd355d6d28912ce9d1b41d22"
+      }
+    }
+  },
+  "frontend_manifest_sha256": "4527fd235168cbf9daf44eca0c63e85d429e7038761d81eca9d0dc6199bf44f3"
+}

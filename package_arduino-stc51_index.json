@@ -1,0 +1,387 @@
+{
+  "packages": [
+    {
+      "name": "stc",
+      "maintainer": "arduino-mcs251 contributors",
+      "websiteURL": "https://github.com/coloz/arduino-stc51",
+      "email": "",
+      "help": {
+        "online": "https://github.com/coloz/arduino-stc51/issues"
+      },
+      "platforms": [
+        {
+          "name": "mcs251",
+          "architecture": "mcs251",
+          "version": "0.0.9",
+          "category": "Contributed",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.9/arduino-mcs251-0.0.9.zip",
+          "archiveFileName": "arduino-mcs251-0.0.9.zip",
+          "checksum": "SHA-256:192998ba99ad15a2f56da8543e3f00e7d668f4a742f0a108d4db415e2aece972",
+          "size": "3965700",
+          "boards": [
+            {
+              "name": "STC32G12K128"
+            },
+            {
+              "name": "STC32G144K246"
+            },
+            {
+              "name": "STC32G8K64"
+            },
+            {
+              "name": "STC32CL8K64"
+            },
+            {
+              "name": "AI8051U-34K64"
+            },
+            {
+              "name": "STC32G12K64"
+            },
+            {
+              "name": "STC32G8K48"
+            },
+            {
+              "name": "STC32CL8K48"
+            },
+            {
+              "name": "AI8051U-34K32"
+            },
+            {
+              "name": "AI8051U-34K16"
+            }
+          ],
+          "toolsDependencies": [
+            {
+              "packager": "stc",
+              "name": "stcxx-toolchain",
+              "version": "0.3.0"
+            },
+            {
+              "packager": "stc",
+              "name": "stc-cli",
+              "version": "0.1.0-stc.2"
+            }
+          ]
+        },
+        {
+          "name": "mcs251",
+          "architecture": "mcs251",
+          "version": "0.0.8",
+          "category": "Contributed",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.8/arduino-mcs251-0.0.8.zip",
+          "archiveFileName": "arduino-mcs251-0.0.8.zip",
+          "checksum": "SHA-256:efd114ad09c3293f428a8ecc034e97e5abcec8ddb137aaa29c3f379d3691b4f4",
+          "size": "3964228",
+          "boards": [
+            {
+              "name": "STC32G12K128"
+            },
+            {
+              "name": "STC32G144K246"
+            },
+            {
+              "name": "STC32G8K64"
+            },
+            {
+              "name": "STC32CL8K64"
+            },
+            {
+              "name": "AI8051U-34K64"
+            },
+            {
+              "name": "STC32G12K64"
+            },
+            {
+              "name": "STC32G8K48"
+            },
+            {
+              "name": "STC32CL8K48"
+            },
+            {
+              "name": "AI8051U-34K32"
+            },
+            {
+              "name": "AI8051U-34K16"
+            }
+          ],
+          "toolsDependencies": [
+            {
+              "packager": "stc",
+              "name": "stcxx-toolchain",
+              "version": "0.3.0"
+            },
+            {
+              "packager": "stc",
+              "name": "stc-cli",
+              "version": "0.1.0-stc.2"
+            }
+          ]
+        },
+        {
+          "name": "mcs251",
+          "architecture": "mcs251",
+          "version": "0.0.7",
+          "category": "Contributed",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.7/arduino-stc51-0.0.7.zip",
+          "archiveFileName": "arduino-stc51-0.0.7.zip",
+          "checksum": "SHA-256:604716a75bd014b9b842da03f71c10e07b141b34d25c0ec4402f6117edb45249",
+          "size": "3633626",
+          "boards": [
+            {
+              "name": "STC32G12K128"
+            },
+            {
+              "name": "STC32G144K246"
+            },
+            {
+              "name": "STC32G8K64"
+            },
+            {
+              "name": "STC32CL8K64"
+            },
+            {
+              "name": "AI8051U-34K64"
+            },
+            {
+              "name": "STC32G12K64"
+            },
+            {
+              "name": "STC32G8K48"
+            },
+            {
+              "name": "STC32CL8K48"
+            },
+            {
+              "name": "AI8051U-34K32"
+            },
+            {
+              "name": "AI8051U-34K16"
+            }
+          ],
+          "toolsDependencies": [
+            {
+              "packager": "stc",
+              "name": "stcxx-toolchain",
+              "version": "0.2.0"
+            },
+            {
+              "packager": "stc",
+              "name": "stc-cli",
+              "version": "0.1.0-stc.2"
+            }
+          ]
+        },
+        {
+          "name": "mcs251",
+          "architecture": "mcs251",
+          "version": "0.0.6",
+          "category": "Contributed",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.6/arduino-stc51-0.0.6.zip",
+          "archiveFileName": "arduino-stc51-0.0.6.zip",
+          "checksum": "SHA-256:d03a138361fc3a510f0d6a76b8364e4f4e099644584a0ec2282d89225889df08",
+          "size": "3493886",
+          "boards": [
+            {
+              "name": "STC32G12K128"
+            },
+            {
+              "name": "STC32G144K246"
+            },
+            {
+              "name": "STC32G8K64"
+            },
+            {
+              "name": "STC32CL8K64"
+            },
+            {
+              "name": "AI8051U-34K64"
+            },
+            {
+              "name": "STC32G12K64"
+            },
+            {
+              "name": "STC32G8K48"
+            },
+            {
+              "name": "STC32CL8K48"
+            },
+            {
+              "name": "AI8051U-34K32"
+            },
+            {
+              "name": "AI8051U-34K16"
+            }
+          ],
+          "toolsDependencies": [
+            {
+              "packager": "stc",
+              "name": "stcxx-toolchain",
+              "version": "0.2.0"
+            },
+            {
+              "packager": "stc",
+              "name": "stc-cli",
+              "version": "0.1.0-stc.2"
+            }
+          ]
+        },
+        {
+          "name": "mcs251",
+          "architecture": "mcs251",
+          "version": "0.0.5",
+          "category": "Contributed",
+          "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.5/arduino-stc51-0.0.5.tar.bz2",
+          "archiveFileName": "arduino-stc51-0.0.5.tar.bz2",
+          "checksum": "SHA-256:ab33d91ef64d862395bc8b6865e6cb123dd54dfa3e7eb2251d89dd5e2f704b3d",
+          "size": "330861",
+          "boards": [
+            {
+              "name": "STC32G12K128"
+            },
+            {
+              "name": "STC32G144K246"
+            },
+            {
+              "name": "STC32G8K64"
+            },
+            {
+              "name": "STC32CL8K64"
+            },
+            {
+              "name": "AI8051U-34K64"
+            },
+            {
+              "name": "STC32G12K64"
+            },
+            {
+              "name": "STC32G8K48"
+            },
+            {
+              "name": "STC32CL8K48"
+            },
+            {
+              "name": "AI8051U-34K32"
+            },
+            {
+              "name": "AI8051U-34K16"
+            }
+          ],
+          "toolsDependencies": [
+            {
+              "packager": "stc",
+              "name": "stcxx-toolchain",
+              "version": "0.1.0"
+            },
+            {
+              "packager": "stc",
+              "name": "stc-cli",
+              "version": "0.1.0-stc.1"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "stcxx-toolchain",
+          "version": "0.3.0",
+          "systems": [
+            {
+              "host": "x86_64-mingw32",
+              "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.8/stcxx-toolchain-0.3.0-windows-x86_64.zip",
+              "archiveFileName": "stcxx-toolchain-0.3.0-windows-x86_64.zip",
+              "checksum": "SHA-256:22e5fbd9ccce4f1f63aee4383f113d00000e03330a8dba632841f14eea600e4f",
+              "size": "101897449"
+            },
+            {
+              "host": "arm64-apple-darwin",
+              "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.8/stcxx-toolchain-0.3.0-macos-arm64.zip",
+              "archiveFileName": "stcxx-toolchain-0.3.0-macos-arm64.zip",
+              "checksum": "SHA-256:9d00fb9c5e9cc7860b8b46d1de1fe7d392f0681479de6111220935f0e8b9e3b9",
+              "size": "68344872"
+            }
+          ]
+        },
+        {
+          "name": "stc-cli",
+          "version": "0.1.0-stc.2",
+          "systems": [
+            {
+              "host": "x86_64-mingw32",
+              "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.6/stc-cli-0.1.0-windows-x86_64-r2.zip",
+              "archiveFileName": "stc-cli-0.1.0-windows-x86_64-r2.zip",
+              "checksum": "SHA-256:04753bc28570ec370cc19709e70b15d446d1c497fc6fd1b5b8653a373b9f3fef",
+              "size": "612109"
+            },
+            {
+              "host": "arm64-apple-darwin",
+              "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.6/stc-cli-0.1.0-macos-arm64-r2.zip",
+              "archiveFileName": "stc-cli-0.1.0-macos-arm64-r2.zip",
+              "checksum": "SHA-256:a8923e5da31432d24d3dccf9325dbf6132bbc0b646c731b547049674de0bc97c",
+              "size": "619305"
+            }
+          ]
+        },
+        {
+          "name": "stcxx-toolchain",
+          "version": "0.2.0",
+          "systems": [
+            {
+              "host": "x86_64-mingw32",
+              "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.6/stcxx-toolchain-0.2.0-windows-x86_64.zip",
+              "archiveFileName": "stcxx-toolchain-0.2.0-windows-x86_64.zip",
+              "checksum": "SHA-256:be68defce3155093585a72d3926e36682df498dcfa6a85ce7b2831e577008359",
+              "size": "100009229"
+            },
+            {
+              "host": "arm64-apple-darwin",
+              "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.6/stcxx-toolchain-0.2.0-macos-arm64.zip",
+              "archiveFileName": "stcxx-toolchain-0.2.0-macos-arm64.zip",
+              "checksum": "SHA-256:83027e7276809c7c9c10bc038a23eaf907cd9dd80fa44b936cfe84f302e15d4c",
+              "size": "66612921"
+            }
+          ]
+        },
+        {
+          "name": "stcxx-toolchain",
+          "version": "0.1.0",
+          "systems": [
+            {
+              "host": "x86_64-mingw32",
+              "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.5/stcxx-toolchain-0.1.0-windows-x86_64.tar.bz2",
+              "archiveFileName": "stcxx-toolchain-0.1.0-windows-x86_64.tar.bz2",
+              "checksum": "SHA-256:a0eef5a51f555cb88cc7dfc6d7caf8cccfe0be053d18973064f9b4f2d07788ef",
+              "size": "100200757"
+            },
+            {
+              "host": "arm64-apple-darwin",
+              "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.5/stcxx-toolchain-0.1.0-macos-arm64.tar.bz2",
+              "archiveFileName": "stcxx-toolchain-0.1.0-macos-arm64.tar.bz2",
+              "checksum": "SHA-256:58eb071c094f51231099958fc450ff2b890e40fdb1f46dd70b808362a1993a91",
+              "size": "58720503"
+            }
+          ]
+        },
+        {
+          "name": "stc-cli",
+          "version": "0.1.0-stc.1",
+          "systems": [
+            {
+              "host": "x86_64-mingw32",
+              "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.2/stc-cli-0.1.0-windows-x86_64-r1.zip",
+              "archiveFileName": "stc-cli-0.1.0-windows-x86_64-r1.zip",
+              "checksum": "SHA-256:6fe37af8e97a5534ed64171165fc7275ac1dbc5d05125d3c1ed2ba03ba961e55",
+              "size": "612567"
+            },
+            {
+              "host": "arm64-apple-darwin",
+              "url": "https://github.com/coloz/arduino-stc51/releases/download/v0.0.2/stc-cli-0.1.0-macos-arm64-r1.tar.gz",
+              "archiveFileName": "stc-cli-0.1.0-macos-arm64-r1.tar.gz",
+              "checksum": "SHA-256:5bd130c696ffa9c0d6092d81263394f781726e7f08d021b80e855c217bfdf2d6",
+              "size": "612925"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

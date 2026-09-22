@@ -1,0 +1,116 @@
+#ifndef STCXX_FREESTANDING_LIMITS
+#define STCXX_FREESTANDING_LIMITS
+
+#if defined(__GNUC__) || defined(__clang__)
+# pragma GCC system_header
+#endif
+
+#if !defined(__STC_CLANG_IR_ONLY__)
+# if defined(__GNUC__) || defined(__clang__)
+#  include_next <limits>
+# else
+#  error "The STC limits shim needs either the STC target or include_next"
+# endif
+#else
+
+#include <limits.h>
+
+/* Arduino.h provides min/max macros.  Keep them from rewriting the standard
+ * numeric_limits member names when this header is included afterwards. */
+#if defined(min)
+# pragma push_macro("min")
+# undef min
+# define STCXX_LIMITS_RESTORE_MIN 1
+#endif
+#if defined(max)
+# pragma push_macro("max")
+# undef max
+# define STCXX_LIMITS_RESTORE_MAX 1
+#endif
+
+namespace std {
+enum float_round_style {
+    round_indeterminate = -1,
+    round_toward_zero = 0,
+    round_to_nearest = 1,
+    round_toward_infinity = 2,
+    round_toward_neg_infinity = 3
+};
+enum float_denorm_style {
+    denorm_indeterminate = -1,
+    denorm_absent = 0,
+    denorm_present = 1
+};
+
+template<class Type> class numeric_limits {
+public:
+    static constexpr bool is_specialized = false;
+    static constexpr Type min() { return Type(); }
+    static constexpr Type max() { return Type(); }
+    static constexpr Type lowest() { return Type(); }
+};
+
+#define STCXX_INTEGER_LIMITS(type, minimum, maximum, signed_value)          \
+template<> class numeric_limits<type> {                                     \
+public:                                                                      \
+    static constexpr bool is_specialized = true;                             \
+    static constexpr type min() { return (type)(minimum); }                  \
+    static constexpr type max() { return (type)(maximum); }                  \
+    static constexpr type lowest() { return min(); }                         \
+    static constexpr bool is_signed = signed_value;                          \
+    static constexpr bool is_integer = true;                                 \
+    static constexpr bool is_exact = true;                                   \
+    static constexpr int radix = 2;                                          \
+    static constexpr bool is_bounded = true;                                 \
+    static constexpr bool is_modulo = !signed_value;                         \
+}
+
+STCXX_INTEGER_LIMITS(bool, false, true, false);
+STCXX_INTEGER_LIMITS(char, CHAR_MIN, CHAR_MAX, (CHAR_MIN < 0));
+STCXX_INTEGER_LIMITS(signed char, SCHAR_MIN, SCHAR_MAX, true);
+STCXX_INTEGER_LIMITS(unsigned char, 0, UCHAR_MAX, false);
+STCXX_INTEGER_LIMITS(short, SHRT_MIN, SHRT_MAX, true);
+STCXX_INTEGER_LIMITS(unsigned short, 0, USHRT_MAX, false);
+STCXX_INTEGER_LIMITS(int, INT_MIN, INT_MAX, true);
+STCXX_INTEGER_LIMITS(unsigned int, 0, UINT_MAX, false);
+STCXX_INTEGER_LIMITS(long, LONG_MIN, LONG_MAX, true);
+STCXX_INTEGER_LIMITS(unsigned long, 0, ULONG_MAX, false);
+STCXX_INTEGER_LIMITS(long long, LLONG_MIN, LLONG_MAX, true);
+STCXX_INTEGER_LIMITS(unsigned long long, 0, ULLONG_MAX, false);
+
+#undef STCXX_INTEGER_LIMITS
+
+#define STCXX_FLOAT_LIMITS(type, min_value, max_value, digits_value)         \
+template<> class numeric_limits<type> {                                     \
+public:                                                                      \
+    static constexpr bool is_specialized = true;                             \
+    static constexpr type min() { return (type)(min_value); }                \
+    static constexpr type max() { return (type)(max_value); }                \
+    static constexpr type lowest() { return (type)(-(max_value)); }          \
+    static constexpr bool is_signed = true;                                  \
+    static constexpr bool is_integer = false;                                \
+    static constexpr bool is_exact = false;                                  \
+    static constexpr int radix = 2;                                          \
+    static constexpr int digits = digits_value;                              \
+    static constexpr bool is_bounded = true;                                 \
+    static constexpr bool is_modulo = false;                                 \
+}
+
+STCXX_FLOAT_LIMITS(float, __FLT_MIN__, __FLT_MAX__, __FLT_MANT_DIG__);
+STCXX_FLOAT_LIMITS(double, __DBL_MIN__, __DBL_MAX__, __DBL_MANT_DIG__);
+STCXX_FLOAT_LIMITS(long double, __LDBL_MIN__, __LDBL_MAX__, __LDBL_MANT_DIG__);
+
+#undef STCXX_FLOAT_LIMITS
+}
+
+#if defined(STCXX_LIMITS_RESTORE_MAX)
+# pragma pop_macro("max")
+# undef STCXX_LIMITS_RESTORE_MAX
+#endif
+#if defined(STCXX_LIMITS_RESTORE_MIN)
+# pragma pop_macro("min")
+# undef STCXX_LIMITS_RESTORE_MIN
+#endif
+
+#endif /* STC target */
+#endif

@@ -1,0 +1,15 @@
+tmp/
+.build/
+.tmp/
+.build-cpp-all-variants/
+**/.build-*/
+**/.cache/
+**/.gate-root/
+**/__pycache__/
+*.py[cod]
+*.d
+*.part
+/.hardware-test/
+
+# Release binaries are generated locally or downloaded from GitHub Releases.
+/dist/

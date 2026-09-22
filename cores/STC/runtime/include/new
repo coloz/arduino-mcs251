@@ -1,0 +1,20 @@
+#ifndef STCXX_FREESTANDING_NEW_HEADER
+#define STCXX_FREESTANDING_NEW_HEADER
+
+/*
+ * Put this directory ahead of compiler headers for the freestanding target.
+ * Host GCC/Clang tests define STCXX_USE_SYSTEM_NEW and continue to their own
+ * standard header so the replacement operators are checked against it.
+ */
+#if defined(STCXX_USE_SYSTEM_NEW)
+# if defined(__GNUC__) || defined(__clang__)
+#  pragma GCC system_header
+#  include_next <new>
+# else
+#  error "STCXX_USE_SYSTEM_NEW through the <new> shim needs include_next"
+# endif
+#else
+# include "stcxx_new.h"
+#endif
+
+#endif
