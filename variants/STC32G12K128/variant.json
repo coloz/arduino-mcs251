@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "as_of": "2026-09-13",
+  "as_of": "2026-09-23",
   "model": "STC32G12K128",
   "family": "STC32G",
   "selection": "popular",
@@ -53,6 +53,143 @@
     "can_layout": 1,
     "wire_layout": 1,
     "uart1": true,
+    "uart_count": 4,
+    "i2c_count": 1,
+    "spi_count": 1,
+    "spi_layout": 1,
+    "uart": [
+      {
+        "controller": 1,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "rx": "P3.0",
+            "tx": "P3.1"
+          },
+          {
+            "selector": 1,
+            "rx": "P3.6",
+            "tx": "P3.7"
+          },
+          {
+            "selector": 2,
+            "rx": "P1.6",
+            "tx": "P1.7"
+          },
+          {
+            "selector": 3,
+            "rx": "P4.3",
+            "tx": "P4.4"
+          }
+        ]
+      },
+      {
+        "controller": 2,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "rx": "P1.0",
+            "tx": "P1.1"
+          },
+          {
+            "selector": 1,
+            "rx": "P4.6",
+            "tx": "P4.7"
+          }
+        ]
+      },
+      {
+        "controller": 3,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "rx": "P0.0",
+            "tx": "P0.1"
+          },
+          {
+            "selector": 1,
+            "rx": "P5.0",
+            "tx": "P5.1"
+          }
+        ]
+      },
+      {
+        "controller": 4,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "rx": "P0.2",
+            "tx": "P0.3"
+          },
+          {
+            "selector": 1,
+            "rx": "P5.2",
+            "tx": "P5.3"
+          }
+        ]
+      }
+    ],
+    "i2c": [
+      {
+        "controller": 1,
+        "default_route": 3,
+        "routes": [
+          {
+            "selector": 0,
+            "sda": "P1.4",
+            "scl": "P1.5"
+          },
+          {
+            "selector": 1,
+            "sda": "P2.4",
+            "scl": "P2.5"
+          },
+          {
+            "selector": 3,
+            "sda": "P3.3",
+            "scl": "P3.2"
+          }
+        ]
+      }
+    ],
+    "spi": [
+      {
+        "controller": 1,
+        "default_route": 0,
+        "default_ss_gpio": "P5.4",
+        "routes": [
+          {
+            "selector": 0,
+            "mosi": "P1.3",
+            "miso": "P1.4",
+            "sck": "P1.5"
+          },
+          {
+            "selector": 1,
+            "mosi": "P2.3",
+            "miso": "P2.4",
+            "sck": "P2.5"
+          },
+          {
+            "selector": 2,
+            "mosi": "P4.0",
+            "miso": "P4.1",
+            "sck": "P4.3"
+          },
+          {
+            "selector": 3,
+            "mosi": "P3.4",
+            "miso": "P3.3",
+            "sck": "P3.2"
+          }
+        ]
+      }
+    ],
+    "communication_source": "https://www.stcmicro.com/datasheet/stc32g-cn.pdf",
     "uart1_buffered_rx": true,
     "timer0_clock_divider": null,
     "adc": {

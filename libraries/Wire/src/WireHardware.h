@@ -1,11 +1,32 @@
-/* STC32G I2C master, alternate route SDA=P3.3 / SCL=P3.2.
- * Register values and command numbers follow the respective STC manuals. */
+/* Independent I2C register banks; selector values come from the variant. */
+#if STC_WIRE_INSTANCE == 1
+#define WIRE_HW_BASE 0x7ef860UL
+#define WIRE_HW_MUX_MASK 0xc0u
+#define WIRE_HW_MUX_SHIFT 6u
+#define WIRE_HW_ROUTE(sda,scl) STC_VARIANT_I2C2_ROUTE(sda,scl)
+#define WIRE_HW_DEFAULT_SDA PIN_I2C2_SDA
+#define WIRE_HW_DEFAULT_SCL PIN_I2C2_SCL
+#else
+#define WIRE_HW_BASE 0x7efe80UL
+#define WIRE_HW_MUX_MASK 0x30u
+#define WIRE_HW_MUX_SHIFT 4u
+#define WIRE_HW_ROUTE(sda,scl) STC_VARIANT_I2C1_ROUTE(sda,scl)
+#define WIRE_HW_DEFAULT_SDA PIN_I2C1_SDA
+#define WIRE_HW_DEFAULT_SCL PIN_I2C1_SCL
+#endif
 #if defined(__SDCC_mcs251)
 #define STC_WIRE_HARDWARE 1
-#define WIRE_HW_READ(r) STC_XFR8(0x7efe80UL + (r))
-#define WIRE_HW_WRITE(r,v) (STC_XFR8(0x7efe80UL + (r)) = (v))
+#define WIRE_HW_READ(r) STC_XFR8(WIRE_HW_BASE + (r))
+#define WIRE_HW_WRITE(r,v) (STC_XFR8(WIRE_HW_BASE + (r)) = (v))
+#define WIRE_HW_GATE_READ() P_SW2
+#define WIRE_HW_GATE_WRITE(v) (P_SW2 = (v))
+#if STC_WIRE_INSTANCE == 1
+#define WIRE_HW_MUX_READ() STC_XFR8(0x7efd6cUL)
+#define WIRE_HW_MUX_WRITE(v) (STC_XFR8(0x7efd6cUL) = (v))
+#else
 #define WIRE_HW_MUX_READ() P_SW2
 #define WIRE_HW_MUX_WRITE(v) (P_SW2 = (v))
+#endif
 #elif defined(STC_WIRE_HOST_HARDWARE_HOOKS)
 #define STC_WIRE_HARDWARE 1
 uint8_t stc_wire_hw_read(uint8_t reg);
@@ -16,6 +37,10 @@ void stc_wire_hw_mux_write(uint8_t value);
 #define WIRE_HW_WRITE(r,v) stc_wire_hw_write(r,v)
 #define WIRE_HW_MUX_READ() stc_wire_hw_mux_read()
 #define WIRE_HW_MUX_WRITE(v) stc_wire_hw_mux_write(v)
+uint8_t stc_wire_hw_gate_read(void);
+void stc_wire_hw_gate_write(uint8_t value);
+#define WIRE_HW_GATE_READ() stc_wire_hw_gate_read()
+#define WIRE_HW_GATE_WRITE(v) stc_wire_hw_gate_write(v)
 #endif
 
 #ifdef STC_WIRE_HARDWARE
@@ -24,20 +49,21 @@ static unsigned long wire_clock_hz = WIRE_DEFAULT_CLOCK_HZ;
 static void wire_handle_timeout(void);
 static uint8_t wire_hw_enter(void)
 {
-    uint8_t saved = WIRE_HW_MUX_READ() & 0x80u;
-    WIRE_HW_MUX_WRITE(WIRE_HW_MUX_READ() | 0x80u);
+    uint8_t saved = WIRE_HW_GATE_READ() & 0x80u;
+    WIRE_HW_GATE_WRITE(WIRE_HW_GATE_READ() | 0x80u);
     return saved;
 }
 static void wire_hw_leave(uint8_t saved)
 {
-    WIRE_HW_MUX_WRITE((WIRE_HW_MUX_READ() & 0x7fu) | saved);
+    WIRE_HW_GATE_WRITE((WIRE_HW_GATE_READ() & 0x7fu) | saved);
 }
 static void wire_hardware_end(void)
 {
     uint8_t saved;
     if (!wire_hardware) return;
-    saved = wire_hw_enter(); WIRE_HW_WRITE(0u, 0u); wire_hw_leave(saved);
-    WIRE_HW_MUX_WRITE((WIRE_HW_MUX_READ() & (uint8_t)~0x30u) | wire_saved_mux);
+    saved = wire_hw_enter(); WIRE_HW_WRITE(0u, 0u);
+    WIRE_HW_MUX_WRITE((WIRE_HW_MUX_READ() & (uint8_t)~WIRE_HW_MUX_MASK) | wire_saved_mux);
+    wire_hw_leave(saved);
     wire_hardware = 0u;
 }
 static void wire_hardware_begin(void)
@@ -48,9 +74,10 @@ static void wire_hardware_begin(void)
     wire_hardware_end();
 #else
     unsigned long divider;
-    uint8_t saved;
+    uint8_t saved, route;
     wire_hardware_end();
-    if (wire_sda_pin != P3_3 || wire_scl_pin != P3_2) return;
+    route = WIRE_HW_ROUTE(wire_sda_pin, wire_scl_pin);
+    if (route == 255u) return;
     divider = wire_clock_hz >= F_CPU / 8UL ? 0UL :
         (F_CPU + 4UL * wire_clock_hz - 1UL) / (4UL * wire_clock_hz) - 2UL;
 #if STC_CORE_WIRE_LAYOUT == 2
@@ -58,9 +85,10 @@ static void wire_hardware_begin(void)
 #else
     if (divider > 63UL) return; /* Software preserves requested lower speeds. */
 #endif
-    wire_saved_mux = WIRE_HW_MUX_READ() & 0x30u;
-    WIRE_HW_MUX_WRITE(WIRE_HW_MUX_READ() | 0x30u);
     saved = wire_hw_enter();
+    wire_saved_mux = WIRE_HW_MUX_READ() & WIRE_HW_MUX_MASK;
+    WIRE_HW_MUX_WRITE((WIRE_HW_MUX_READ() & (uint8_t)~WIRE_HW_MUX_MASK) |
+                      (uint8_t)(route << WIRE_HW_MUX_SHIFT));
     WIRE_HW_WRITE(0u, 0u); WIRE_HW_WRITE(8u, 0u); /* Manual commands, no DMA. */
 #if STC_CORE_WIRE_LAYOUT == 2
     /* STC32G144 manual 27.1.4: I2CPSCR holds divider bits 13:6.
@@ -103,7 +131,9 @@ static uint8_t wire_hardware_write(uint8_t value)
     uint8_t saved = wire_hw_enter();
     WIRE_HW_WRITE(6u, value); wire_hw_leave(saved);
     if (!wire_hardware_command(2u) || !wire_hardware_command(3u)) return WIRE_INTERNAL_TIMEOUT;
-    return wire_hw_status & 1u ? WIRE_INTERNAL_NACK : WIRE_INTERNAL_ACK;
+    /* MSACKI (bit 1) is the received ACK; MSACKO (bit 0) is the
+     * independently latched ACK/NACK that the master sends on reads. */
+    return wire_hw_status & 2u ? WIRE_INTERNAL_NACK : WIRE_INTERNAL_ACK;
 }
 static uint8_t wire_hardware_read(uint8_t send_ack, uint8_t *value)
 {

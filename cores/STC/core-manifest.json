@@ -73,6 +73,8 @@
     "Stream.cpp",
     "IPAddress.cpp",
     "HardwareSerial.cpp",
+    "HardwareSerial1.cpp",
+    "HardwareSerialExtra.cpp",
     "runtime/src/stcxx_math.cpp",
     "runtime/src/stcxx_itoa.cpp",
     "runtime/src/stcxx_allocator.cpp",
@@ -110,6 +112,7 @@
     "Serial_flush",
     "Serial_overflow",
     "SPI_begin",
+    "SPI_usingHardware",
     "SPI_setPins",
     "SPI_beginTransaction",
     "SPI_setSettings",
@@ -139,14 +142,18 @@
     "Wire_read"
   ],
   "spi_wire_limits": [
-    "software master implementations only",
+    "SPI/Wire select supported hardware routes or retain software master fallback; AI8051U Wire master remains software",
+    "STC32G144K246 exposes independent Wire (IIC1) and Wire1 (IIC2) master/slave objects",
+    "SPI exposes one controller, or SPI/SPI1/SPI2 on STC32G144K246 with separate state; overlapping transactions across buses are rejected",
     "SPI transactions save/mask/restore registered interrupt enables; this is not a recursive mutex",
-    "SPI_CLOCK_DIV2 through SPI_CLOCK_DIV128 are literal divisor ratios and setClockDivider requests F_CPU/divisor from the software HAL; they are not AVR register encodings or a physical-clock guarantee",
-    "SPI using/notUsingInterrupt register INT0/INT1 masks or a global interrupt guard; attach/detachInterrupt remain compatibility no-ops because no hardware transfer-completion interrupt exists",
+    "SPI_CLOCK_DIV2 through SPI_CLOCK_DIV128 are literal divisor ratios and setClockDivider requests F_CPU/divisor; they are not AVR register encodings or a physical-clock guarantee",
+    "SPI using/notUsingInterrupt register INT0/INT1 masks or a global interrupt guard; attach/detachInterrupt remain compatibility no-ops because no transfer-completion callback is exposed",
+    "SPI usingHardware reports the active backend; G144 hardware requires a verifiable enabled HSIO PLL and otherwise falls back to GPIO",
     "Wire supports 7-bit controller addresses and configurable transmit/receive buffers, default 32 bytes each",
     "Wire implements timeout flags, repeated-start reads, hardware slave begin(address), onReceive and onRequest; 10-bit addressing is not supported"
   ],
   "arduino_source_compatibility": {
+    "hardware_serial_ports": "Serial1..4, or Serial1..8 on STC32G144K246; current STC32CL TSSOP20 variants omit unbonded Serial2; 8N1, independent interrupt RX, synchronous TX and checked hardware pin routes",
     "pulseIn_cpp_default_timeout_microseconds": 1000000,
     "pulseInLong_cpp_default_timeout_microseconds": 1000000,
     "hardware_serial_readBytes": {

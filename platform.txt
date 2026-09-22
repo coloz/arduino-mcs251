@@ -2,7 +2,7 @@
 # See README.md and tools/stcxx-driver/README.md for compiler usage and support boundaries.
 
 name=mcs251
-version=0.0.1
+version=0.0.2
 
 compiler.warning_flags=--less-pedantic --stcxx-warnings=default
 compiler.warning_flags.none=--less-pedantic --stcxx-warnings=none
@@ -19,7 +19,7 @@ compiler.backend.ar.cmd=sdar
 compiler.c.cmd=stcxx
 compiler.c.cmd.windows=stcxx.exe
 compiler.dep.flags=-MMD
-compiler.c.flags=-c --std-sdcc11 --opt-code-size -Ddouble=float -DSTC_CORE_REVISION=20260922 -DSTC_CORE_LAYOUT=2 --model-{build.memory_model} {compiler.warning_flags} {build.flash_flags}
+compiler.c.flags=-c --std-sdcc11 --opt-code-size -Ddouble=float -DSTC_CORE_REVISION=20260923 -DSTC_CORE_LAYOUT=2 --model-{build.memory_model} {compiler.warning_flags} {build.flash_flags}
 compiler.c.elf.cmd=stcxx
 compiler.c.elf.cmd.windows=stcxx.exe
 compiler.c.elf.flags=--code-size {upload.maximum_size} --xram-size {upload.maximum_xdata_size} {build.xram_flags} --model-{build.memory_model} {build.link_flags} {build.flash_flags}

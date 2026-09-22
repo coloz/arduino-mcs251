@@ -10,9 +10,10 @@ repeated START, transaction status and clock-stretch timeout APIs remain availab
 `Wire.begin(address)`, `onReceive(void (*)(int))`, and
 `onRequest(void (*)(void))` enable a hardware I2C slave (`WIRE_HAS_SLAVE=1`).
 
-Slave mode uses SDA=P3.3 and SCL=P3.2 with external pull-ups. When no pins
-have been selected, `begin(address)` selects this route automatically. An
-explicit incompatible `setPins` configuration is rejected. Check
+Slave mode defaults to SDA=P3.3 and SCL=P3.2 with external pull-ups. When no pins
+have been selected, `begin(address)` selects this route automatically. Any
+complete hardware route listed by the variant can be selected with
+`setPinsChecked(sda, scl)` before initialization. An incompatible route is rejected. Check
 `Wire.configurationError()` after initialization. Addresses must be 1–127;
 general-call address zero is not enabled. Master and slave operation are
 alternative modes of the same controller, not simultaneous roles.
@@ -30,3 +31,14 @@ See [SlaveEcho](examples/SlaveEcho/SlaveEcho.ino). The host state-machine tests
 exercise address/data, repeated START, ACK/NACK, overflow and shutdown; target
 builds cover all ten variants. Physical bus timing and interaction with other
 active peripherals still require board-level validation.
+
+STC32G144K246 also exposes `Wire1` for its independent IIC2 controller, using
+SDA=P2.6 and SCL=P2.7 by default. Both objects support the same master and slave
+APIs, with separate registers, buffers, callbacks and timeout flags. `Wire1`
+state uses XDATA by default. See [DualBus](examples/DualBus/DualBus.ino) and the
+[variant pin tables](../../variants/README.md). Ensure active peripherals do not
+share physical pins. STC32 hardware master routes now follow the generated
+variant tables; other GPIO pairs retain software fallback. AI8051U retains its
+existing software master and hardware slave behavior.
+On AI8051U, the existing software master defaults to SDA=P3.2/SCL=P3.3;
+the hardware slave default is SDA=P3.3/SCL=P3.2.

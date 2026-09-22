@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Generate boards.txt and per-model variants from devices.json.
+// Generate boards.txt and per-model variants from devices.json and peripherals.json.
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
@@ -9,6 +9,113 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const root = join(scriptDir, "..", "..");
 const databasePath = join(scriptDir, "devices.json");
 const check = process.argv.includes("--check");
+const peripheralDatabase = JSON.parse(readFileSync(join(scriptDir, "peripherals.json"), "utf8"));
+
+function communicationProfile(device) {
+  return device.capabilities.uart_count === 8 ? "stc32g144" :
+    device.family === "AI8051U" ? "ai8051u" : "stc32g";
+}
+
+function communicationChannels(device, kind) {
+  const masks = portMasks(device);
+  const channels = peripheralDatabase.profiles[communicationProfile(device)][kind];
+  if (channels.length !== device.capabilities[`${kind}_count`]) {
+    throw new Error(`${kind} count does not match the peripheral profile for ${device.model}`);
+  }
+  return channels.map((routes, index) => {
+    const seen = new Set();
+    for (const [selector, left, right] of routes) {
+      if (!Number.isInteger(selector) || selector < 0 || selector > 3 ||
+          seen.has(selector) || !parsePin(left) || !parsePin(right) || left === right ||
+          pinAliasGroups(device).some(group => group.includes(left) && group.includes(right))) {
+        throw new Error(`invalid ${kind} route for ${device.model}`);
+      }
+      seen.add(selector);
+    }
+    const available = routes.filter(([, ...pins]) => pins.every(pin => {
+      const p = parsePin(pin);
+      return masks[p.port] & (1 << p.bit);
+    })).map(([selector, left, right]) => kind === "uart" ?
+      { selector, rx: left, tx: right } : { selector, sda: left, scl: right });
+    const defaultRoute = kind === "i2c" && index === 0 ? 3 : 0;
+    if (available.length && !available.some(route => route.selector === defaultRoute)) {
+      throw new Error(`default ${kind}${index + 1} route is not bonded for ${device.model}`);
+    }
+    return { controller: index + 1, default_route: available.length ? defaultRoute : null, routes: available };
+  });
+}
+
+function uartAvailableMask(device) {
+  return communicationChannels(device, "uart").reduce((mask, channel, i) =>
+    mask | (channel.routes.length ? 1 << i : 0), 0);
+}
+
+function spiChannels(device) {
+  const profile = peripheralDatabase.profiles[communicationProfile(device)];
+  const masks = portMasks(device);
+  const bonded = pin => { const p = parsePin(pin); return p && (masks[p.port] & (1 << p.bit)); };
+  if (profile.spi.length !== device.capabilities.spi_count) {
+    throw new Error(`SPI count does not match ${device.model}`);
+  }
+  return profile.spi.map((routes, index) => {
+    const selectors = new Set();
+    for (const [selector, ...pins] of routes) {
+      if (!Number.isInteger(selector) || selector < 0 || selector > 3 || selectors.has(selector) ||
+          pins.length !== 3 || pins.some(pin => !parsePin(pin)) || new Set(pins).size !== 3 ||
+          pinAliasGroups(device).some(group => pins.filter(pin => group.includes(pin)).length > 1)) {
+        throw new Error(`invalid SPI${index + 1} route for ${device.model}`);
+      }
+      selectors.add(selector);
+    }
+    const available = routes.filter(([, ...pins]) => pins.every(bonded))
+      .map(([selector, mosi, miso, sck]) => ({ selector, mosi, miso, sck }));
+    const ss = profile.spi_default_ss[index];
+    const defaults = available.find(route => route.selector === 0);
+    if (!defaults || !bonded(ss) || [defaults.mosi, defaults.miso, defaults.sck].some(pin =>
+        pin === ss || pinAliasGroups(device).some(group => group.includes(pin) && group.includes(ss)))) {
+      throw new Error(`invalid default SPI${index + 1} pins for ${device.model}`);
+    }
+    return { controller: index + 1, default_route: 0, default_ss_gpio: ss, routes: available };
+  });
+}
+
+function renderCommunication(device) {
+  const lines = ["/* Controller counts include unbonded peripherals; route tables only contain valid pins. */"];
+  for (const kind of ["uart", "i2c"]) {
+    for (const channel of communicationChannels(device, kind)) {
+      const number = channel.controller;
+      const prefix = `STC_VARIANT_${kind.toUpperCase()}${number}`;
+      const keys = kind === "uart" ? ["rx", "tx"] : ["sda", "scl"];
+      const route = channel.routes.find(r => r.selector === channel.default_route);
+      lines.push(`#define ${prefix}_ROUTE_COUNT ${channel.routes.length}U`);
+      for (const key of keys) {
+        lines.push(`#define PIN_${kind === "uart" ? "SERIAL" : "I2C"}${number}_${key.toUpperCase()} ${route ? pinMacro(route[key]) : "NOT_A_PIN"}`);
+        lines.push(renderMapMacro(`${prefix}_${key.toUpperCase()}_PIN`, "route",
+          channel.routes.map(r => [`${r.selector}U`, pinMacro(r[key])]), "NOT_A_PIN"));
+      }
+      const expressions = channel.routes.map(r =>
+        `(((left) == ${pinMacro(r[keys[0]])}) && ((right) == ${pinMacro(r[keys[1]])})) ? ${r.selector}U : `);
+      lines.push(`#define ${prefix}_ROUTE(left, right) (${expressions.join("")}255U)`);
+    }
+  }
+  lines.push("#define PIN_SERIAL_RX PIN_SERIAL1_RX", "#define PIN_SERIAL_TX PIN_SERIAL1_TX");
+  if (device.capabilities.i2c_count > 1) lines.push("#define PIN_WIRE1_SDA PIN_I2C2_SDA", "#define PIN_WIRE1_SCL PIN_I2C2_SCL");
+  for (const channel of spiChannels(device)) {
+    const prefix = `STC_VARIANT_SPI${channel.controller}`;
+    const defaults = channel.routes.find(route => route.selector === channel.default_route);
+    lines.push(`#define ${prefix}_ROUTE_COUNT ${channel.routes.length}U`);
+    for (const key of ["mosi", "miso", "sck"]) {
+      lines.push(`#define PIN_SPI${channel.controller}_${key.toUpperCase()} ${pinMacro(defaults[key])}`);
+      lines.push(renderMapMacro(`${prefix}_${key.toUpperCase()}_PIN`, "route",
+        channel.routes.map(route => [`${route.selector}U`, pinMacro(route[key])]), "NOT_A_PIN"));
+    }
+    lines.push(`#define PIN_SPI${channel.controller}_SS ${pinMacro(channel.default_ss_gpio)}`);
+    const match = channel.routes.map(route =>
+      `(((mosi) == ${pinMacro(route.mosi)}) && ((miso) == ${pinMacro(route.miso)}) && ((sck) == ${pinMacro(route.sck)})) ? ${route.selector}U : `);
+    lines.push(`#define ${prefix}_ROUTE(mosi, miso, sck) (${match.join("")}255U)`);
+  }
+  return lines.join("\n");
+}
 
 const CORE_FAMILY_RULES = [
   [/^STC32/, "32"],
@@ -160,6 +267,11 @@ function renderCoreFlags(device) {
   flags.push(`-DSTC_CORE_HAS_SEPARATE_PULLUP=${device.capabilities.separate_pullup === true ? 1 : 0}`);
   flags.push(`-DSTC_CORE_TIMER1_IS_1T=${device.capabilities.timer1_1t ? 1 : 0}`);
   flags.push(`-DSTC_CORE_HAS_UART1=${device.capabilities.uart1 === false ? 0 : 1}`);
+  flags.push(`-DSTC_CORE_UART_COUNT=${device.capabilities.uart_count}`);
+  flags.push(`-DSTC_CORE_I2C_COUNT=${device.capabilities.i2c_count}`);
+  flags.push(`-DSTC_CORE_UART_AVAILABLE_MASK=${uartAvailableMask(device)}`);
+  flags.push(`-DSTC_CORE_SPI_COUNT=${device.capabilities.spi_count}`);
+  flags.push(`-DSTC_CORE_SPI_LAYOUT=${device.capabilities.spi_layout}`);
   flags.push(`-DSTC_CORE_SERIAL_BUFFERED_RX=${device.capabilities.uart1 !== false && device.maximum_code_bytes > 2048 ? 1 : 0}`);
   flags.push(`-DSTC_CORE_HAS_ADC=${device.adc === false ? 0 : 1}`);
   flags.push(`-DSTC_CORE_ADC_LAYOUT=${adcLayoutId(device)}`);
@@ -462,6 +574,13 @@ function loadDatabase() {
     if (![0, 1, 2, 3].every((port) => device.capabilities.ports.includes(port))) {
       throw new Error(`${device.model} capabilities must include core ports 0 through 3`);
     }
+    if (![4, 8].includes(device.capabilities.uart_count) ||
+        ![1, 2].includes(device.capabilities.i2c_count) ||
+        ![1, 3].includes(device.capabilities.spi_count) ||
+        ![1, 2, 3].includes(device.capabilities.spi_layout) ||
+        (device.capabilities.spi_layout === 2) !== (device.capabilities.spi_count === 3)) {
+      throw new Error(`invalid UART/I2C/SPI capabilities for ${device.model}`);
+    }
     coreFamilyName(device);
     const variant = variantName(device);
     if (ids.has(device.id) || models.has(device.model) || macros.has(device.macro) || variants.has(variant)) {
@@ -574,7 +693,7 @@ function clockLabel(hz) {
 
 function renderBoards(devices) {
   const lines = [
-    "# Generated by tools/variants/generate.mjs; edit devices.json instead.",
+    "# Generated by tools/variants/generate.mjs; edit devices.json / peripherals.json instead.",
     "# Bare-MCU variants use maximum logical port masks. Verify the selected package pinout.",
     "",
     "menu.clock=CPU clock (must match ISP configuration)",
@@ -774,8 +893,6 @@ ${pins.join("\n")}
 # define digitalPinToPhysicalAlias(pin) STC_VARIANT_PHYSICAL_ALIAS(pin)
 #endif
 
-#define PIN_SERIAL_RX P3_0
-#define PIN_SERIAL_TX P3_1
 #if STC_CORE_WIRE_LAYOUT != 0
 # define PIN_WIRE_SDA P3_3
 # define PIN_WIRE_SCL P3_2
@@ -853,7 +970,7 @@ function renderVariantHeader(device) {
     renderMapMacro("STC_VARIANT_ADC_PIN_TO_CHANNEL", "pin",
       entries.map(([pin, channel]) => [pinMacro(pin), `${channel}U`]), "NOT_AN_ADC_CHANNEL"),
   ].filter((line) => line !== "").join("\n");
-  return `// Generated by tools/variants/generate.mjs; edit devices.json instead.
+  return `// Generated by tools/variants/generate.mjs; edit devices.json / peripherals.json instead.
 #ifndef ${guard}
 #define ${guard}
 
@@ -870,10 +987,14 @@ function renderVariantHeader(device) {
 #define STC_PINOUT_IS_PACKAGE_DEPENDENT ${device.package_dependent ? 1 : 0}
 #define STC_VARIANT_HAS_SEPARATE_PULLUP ${device.capabilities.separate_pullup === true ? 1 : 0}
 #define STC_VARIANT_HAS_UART1 ${device.capabilities.uart1 === false ? 0 : 1}
+#define STC_VARIANT_UART_COUNT ${device.capabilities.uart_count}U
+#define STC_VARIANT_I2C_COUNT ${device.capabilities.i2c_count}U
+#define STC_VARIANT_SPI_COUNT ${device.capabilities.spi_count}U
 #define STC_VARIANT_SERIAL_BUFFERED_RX ${device.capabilities.uart1 !== false && device.maximum_code_bytes > 2048 ? 1 : 0}
 ${masks}
 ${renderPinAliasMacro(device)}
 ${renderPhysicalAliasMacro(device)}
+${renderCommunication(device)}
 ${analogDefinitions}
 
 #include "../_common/pins_arduino_common.h"
@@ -977,6 +1098,14 @@ function renderMetadata(database, device) {
       can_layout: device.capabilities.can_layout ?? 0,
       wire_layout: device.capabilities.wire_layout ?? device.capabilities.bus_layout ?? 0,
       uart1: device.capabilities.uart1 !== false,
+      uart_count: device.capabilities.uart_count,
+      i2c_count: device.capabilities.i2c_count,
+      spi_count: device.capabilities.spi_count,
+      spi_layout: device.capabilities.spi_layout,
+      uart: communicationChannels(device, "uart"),
+      i2c: communicationChannels(device, "i2c"),
+      spi: spiChannels(device),
+      communication_source: peripheralDatabase.sources[communicationProfile(device)],
       uart1_buffered_rx:
         device.capabilities.uart1 !== false && device.maximum_code_bytes > 2048,
       timer0_clock_divider: device.capabilities.timer0_clock_divider ?? null,

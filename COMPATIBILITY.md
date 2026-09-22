@@ -1,6 +1,6 @@
 # Arduino 兼容范围
 
-平台面向 STC MCS251，具体硬件接线、时序和容量需按应用确认。
+平台面向 STC MCS251，具体硬件接线、时序和容量需按应用确认。各接口已覆盖和未适配的硬件资源见 [接口适配检查](variants/HARDWARE_INTERFACES.md)。
 
 公共类的对照基线为 [ArduinoCore-API 1.5.2](https://github.com/arduino/ArduinoCore-API/tree/1.5.2)，
 传统入口、引脚与串口常量保留现有 Arduino AVR 风格。不同官方架构的
@@ -27,7 +27,9 @@
 | 诊断 | 普通命令与成功信息使用 stdout；真实警告/错误使用 stderr；IDE 警告级别传给前端，显式 `-Werror` 仍生效 |
 | 内存报告 | 默认使用 Arduino 标准两行摘要；动态内存统计 XDATA/PDATA（含堆预留），总容量随 XRAM 菜单变化；内部静态 RAM 和 EDATA 栈独立，不计入该比例；`advanced-size` 可查看分区明细 |
 | tone | 单路 Timer2 非阻塞方波，支持时长及 `noTone`；已有 Timer2 占用时拒绝启动 |
-| Wire | 原有主机模式，加硬件从机、接收/请求回调；从机固定 SDA=P3.3、SCL=P3.2，默认缓冲 32 字节 |
+| UART | `Serial1`～`Serial4`，STC32G144K246 扩展至 `Serial8`；STC32CL 当前封装不引出 UART2；支持完整硬件引脚组选择、独立中断接收及同步发送 |
+| Wire | 主机和硬件从机、接收/请求回调；支持变体列出的硬件复用组，默认缓冲 32 字节；STC32G144K246 提供独立的第二路 `Wire1` |
+| SPI | 所有型号 1 路，G144 提供 `SPI`/`SPI1`/`SPI2` 三路主机；支持硬件引脚组和 GPIO 回退；G144 需可验证的现有 HSIO 时钟，`usingHardware()` 查询实际方式 |
 | SD | FAT16/FAT32、8.3 路径、嵌套目录、目录枚举、多文件、共享句柄；不支持长文件名、exFAT、断电事务保证 |
 
 C++ 不支持变长栈数组、`alloca`、异常和 RTTI；第三方库必须满足目标 ABI 和内存限制。
@@ -36,6 +38,8 @@ C++ 不支持变长栈数组、`alloca`、异常和 RTTI；第三方库必须满
 `toneConfigurationError()` 可查询错误。频率范围为 31 Hz 至
 `STC_TONE_MAX_FREQUENCY`（`F_CPU/4096`）；该上限限制中断负荷，不是实测
 最高可靠输出频率。使用 Timer2 不改变 Timer0 计时和默认 UART1/Timer1。
+`Serial2` 同样使用 Timer2，不能与 `tone()` 同时运行。串口数量、默认引脚、
+IIC 配置与小容量型号的 Flash 限制见 [变体文档](variants/README.md)。
 持续时间以 `millis()` 判断；关闭中断、耗时回调会影响实际波形与停止时间。
 同一时刻只能输出一个引脚，另一引脚请求会返回定时器忙。
 

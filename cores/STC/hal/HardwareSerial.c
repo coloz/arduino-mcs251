@@ -3,6 +3,19 @@
 #include "stc_sfr.h"
 #include "wiring_digital_private.h"
 #include "stc_usb_service.h"
+#include "HardwareSerial_ports.h"
+
+static uint8_t serial_rx_pin = PIN_SERIAL_RX;
+static uint8_t serial_tx_pin = PIN_SERIAL_TX;
+static uint8_t serial_route;
+
+bool Serial_setPinsChecked(uint8_t rx, uint8_t tx)
+{
+    uint8_t route = STC_VARIANT_UART1_ROUTE(rx, tx);
+    if (stc_uart1_started || route == 255u) return false;
+    serial_rx_pin = rx; serial_tx_pin = tx; serial_route = route;
+    return true;
+}
 
 /* Timer1 baud generation uses the board-selected clock divider. */
 #ifndef STC_SERIAL_TIMER1_CLOCK_DIVIDER
@@ -27,6 +40,18 @@
 /* Supported STC32/AI families use INTCLKO at 0x8f. */
 __sfr __at (0x8f) STC_SERIAL_INTCLKO;
 
+/* STC32G and AI8051U: TM1PS at 7EFEA1 divides Timer1's input clock.
+ * Baud calculations require no prescaling, regardless of its previous user. */
+static uint8_t stc_serial_prescaler(uint8_t value)
+{
+    uint8_t saved = P_SW2 & STC_P_SW2_EAXFR, previous;
+    P_SW2 |= STC_P_SW2_EAXFR;
+    previous = STC_XFR8(0x7efea1UL);
+    STC_XFR8(0x7efea1UL) = value;
+    P_SW2 = (P_SW2 & (uint8_t)~STC_P_SW2_EAXFR) | saved;
+    return previous;
+}
+
 # if STC_CORE_SERIAL_BUFFERED_RX
 
 /* Timer1 and UART1 routing state temporarily owned by buffered Serial. */
@@ -39,6 +64,7 @@ static uint8_t serial_saved_et1;
 static uint8_t serial_saved_auxr;
 static uint8_t serial_saved_intclko;
 static uint8_t serial_saved_p_sw1;
+static uint8_t serial_saved_prescaler;
 
 static uint8_t stc_serial_rounded_divisor(unsigned long clock,
                                           unsigned long denominator,
@@ -63,34 +89,14 @@ static uint8_t stc_serial_rounded_divisor(unsigned long clock,
     return 1u;
 }
 
-static uint8_t stc_serial_baud_error_is_acceptable(unsigned long clock,
-                                                    unsigned long denominator,
+static uint8_t stc_serial_baud_error_is_acceptable(unsigned long denominator,
                                                     unsigned long divisor) __reentrant
 {
     unsigned long generated_ticks = denominator * divisor;
-    unsigned long difference;
-    unsigned long allowed;
-    unsigned long hundreds;
-    uint8_t remainder;
-
-    if (clock >= generated_ticks) {
-        difference = clock - generated_ticks;
-    } else {
-        difference = generated_ticks - clock;
-    }
-
-    /* Reject configurations whose baud error exceeds three percent. */
-    hundreds = generated_ticks / 100UL;
-    /* The remainder is 0..99; its rounded three-percent term fits in 16 bits. */
-    remainder = (uint8_t)(generated_ticks - hundreds * 100UL);
-    allowed = hundreds * 3UL;
-    /* For remainder 0..99, ceil(3 * remainder / 100) crosses these bounds. */
-    if (remainder != 0u) {
-        ++allowed;
-        if (remainder > 33u) ++allowed;
-        if (remainder > 66u) ++allowed;
-    }
-    return (difference <= allowed) ? 1u : 0u;
+    /* Exact three-percent bounds, evaluated at compile time. Splitting the
+     * products keeps the arithmetic within 32 bits at all supported clocks. */
+    return generated_ticks >= (F_CPU / 103UL) * 100UL + ((F_CPU % 103UL) * 100UL + 102UL) / 103UL &&
+           generated_ticks <= (F_CPU / 97UL) * 100UL + ((F_CPU % 97UL) * 100UL) / 97UL;
 }
 
 static uint8_t stc_serial_calculate_reload(unsigned long baud,
@@ -114,8 +120,7 @@ static uint8_t stc_serial_calculate_reload(unsigned long baud,
         return 0u;
     }
     if ((divisor == 0UL) || (divisor >= 65536UL) ||
-        (stc_serial_baud_error_is_acceptable((unsigned long)F_CPU,
-                                             denominator, divisor) == 0u)) {
+        (stc_serial_baud_error_is_acceptable(denominator, divisor) == 0u)) {
         return 0u;
     }
     *reload = (uint16_t)(65536UL - divisor);
@@ -210,6 +215,13 @@ static void stc_serial_configure_uart1_pins(void)
 {
     uint8_t saved_ea = (uint8_t)(IE & STC_IE_EA);
 
+    if (serial_route != 0u) {
+        digitalWrite(serial_tx_pin, HIGH);
+        pinMode(serial_tx_pin, OUTPUT);
+        pinMode(serial_rx_pin, INPUT_PULLUP);
+        return;
+    }
+
     IE &= (uint8_t)~STC_IE_EA;
 
     /* Match pinMode(P3.0, INPUT_PULLUP) without linking all digital APIs. */
@@ -241,7 +253,7 @@ void Serial_begin(unsigned long baud)
     uint8_t double_baud;
 
 #if STC_CORE_USB_LAYOUT
-    if (stc_usb_active) return;
+    if (stc_usb_active && serial_route == 0u) return;
 #endif
 
     if (stc_serial_calculate_reload(baud, &reload, &double_baud) == 0u) {
@@ -267,6 +279,11 @@ void Serial_begin(unsigned long baud)
     IE &= (uint8_t)~STC_IE_ES;
     TCON &= (uint8_t)~(STC_TCON_TR1 | STC_SERIAL_TF1);
     IE &= (uint8_t)~STC_IE_ET1;
+# if STC_CORE_SERIAL_BUFFERED_RX
+    serial_saved_prescaler = stc_serial_prescaler(0u);
+# else
+    (void)stc_serial_prescaler(0u);
+# endif
 
     /* Select Timer1 rather than Timer2 and disable Timer1 clock output. */
     AUXR &= (uint8_t)~STC_AUXR_S1_BRT_T2;
@@ -278,7 +295,7 @@ void Serial_begin(unsigned long baud)
     STC_SERIAL_INTCLKO &= (uint8_t)~STC_SERIAL_T1_CLOCK_OUTPUT;
 
     /* UART1 route is controlled by P_SW1. */
-    P_SW1 &= (uint8_t)~STC_SERIAL_UART1_ROUTE;
+    P_SW1 = (P_SW1 & (uint8_t)~STC_SERIAL_UART1_ROUTE) | (serial_route << 6);
     TMOD &= 0x0fu;             /* Timer1, 16-bit auto reload, not gated. */
     TH1 = (uint8_t)(reload >> 8);
     TL1 = (uint8_t)reload;
@@ -294,7 +311,7 @@ void Serial_begin(unsigned long baud)
     SCON = STC_SCON_MODE1 | STC_SCON_REN;
     stc_uart1_started = 1u;
 #if STC_CORE_USB_LAYOUT
-    stc_usb_uart1_active = 1u;
+    stc_usb_uart1_active = serial_route == 0u;
 #endif
 # if STC_CORE_SERIAL_BUFFERED_RX
     IE |= STC_IE_ES;
@@ -341,6 +358,7 @@ void Serial_end(void)
     P_SW1 = (uint8_t)((P_SW1 & (uint8_t)~STC_SERIAL_UART1_ROUTE) |
                       (serial_saved_p_sw1 & STC_SERIAL_UART1_ROUTE));
     IE = (uint8_t)((IE & (uint8_t)~STC_IE_ET1) | serial_saved_et1);
+    (void)stc_serial_prescaler(serial_saved_prescaler);
     TCON = (uint8_t)((TCON &
                       (uint8_t)~(STC_TCON_TR1 | STC_SERIAL_TF1)) |
                      serial_saved_tr1 | serial_saved_tf1);

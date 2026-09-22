@@ -1,62 +1,27 @@
-
 #include "HardwareSerial.h"
 
-#include "hal/stc_c_hal.h"
-
-HardwareSerial Serial1;
-
+bool HardwareSerial::setPinsChecked(uint8_t rx, uint8_t tx)
+{
+    _configurationError = !_backend->setPins(_port, rx, tx);
+    return !_configurationError;
+}
 void HardwareSerial::begin(unsigned long baud, uint16_t configuration)
 {
     if (configuration != SERIAL_8N1) {
-        Serial_end();
-        _configurationError = true;
-        return;
+        end(); _configurationError = true; return;
     }
-    _configurationError = false;
-    Serial_begin(baud);
-    _configurationError = !Serial_active();
+    _configurationError = !_backend->begin(_port, baud);
 }
-
-void HardwareSerial::end()
-{
-    Serial_end();
-}
-
-int HardwareSerial::available()
-{
-    return Serial_available();
-}
-
-int HardwareSerial::peek()
-{
-    return Serial_peek();
-}
-
-int HardwareSerial::read()
-{
-    return Serial_read();
-}
-
-int HardwareSerial::availableForWrite()
-{
-    return Serial_availableForWrite();
-}
-
-void HardwareSerial::flush()
-{
-    Serial_flush();
-}
-
+void HardwareSerial::end() { _backend->end(_port); }
+int HardwareSerial::available() { return _backend->available(_port); }
+int HardwareSerial::peek() { return _backend->peek(_port); }
+int HardwareSerial::read() { return _backend->read(_port); }
+int HardwareSerial::availableForWrite() { return _backend->availableForWrite(_port); }
+void HardwareSerial::flush() { _backend->flush(_port); }
 size_t HardwareSerial::write(uint8_t value)
 {
-    size_t written = Serial_write(value);
-    if (written == 0u) {
-        setWriteError();
-    }
+    size_t written = _backend->write(_port, value);
+    if (!written) setWriteError();
     return written;
 }
-
-bool HardwareSerial::overflow()
-{
-    return Serial_overflow();
-}
+bool HardwareSerial::overflow() { return _backend->overflow(_port); }

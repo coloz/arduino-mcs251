@@ -151,8 +151,6 @@
 # define digitalPinToPhysicalAlias(pin) STC_VARIANT_PHYSICAL_ALIAS(pin)
 #endif
 
-#define PIN_SERIAL_RX P3_0
-#define PIN_SERIAL_TX P3_1
 #if STC_CORE_WIRE_LAYOUT != 0
 # define PIN_WIRE_SDA P3_3
 # define PIN_WIRE_SCL P3_2

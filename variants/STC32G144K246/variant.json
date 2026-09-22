@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "as_of": "2026-09-13",
+  "as_of": "2026-09-23",
   "model": "STC32G144K246",
   "family": "STC32G",
   "selection": "rising",
@@ -60,6 +60,360 @@
     "can_layout": 2,
     "wire_layout": 2,
     "uart1": true,
+    "uart_count": 8,
+    "i2c_count": 2,
+    "spi_count": 3,
+    "spi_layout": 2,
+    "uart": [
+      {
+        "controller": 1,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "rx": "P3.0",
+            "tx": "P3.1"
+          },
+          {
+            "selector": 1,
+            "rx": "P3.6",
+            "tx": "P3.7"
+          },
+          {
+            "selector": 2,
+            "rx": "P1.6",
+            "tx": "P1.7"
+          },
+          {
+            "selector": 3,
+            "rx": "P4.3",
+            "tx": "P4.4"
+          }
+        ]
+      },
+      {
+        "controller": 2,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "rx": "P1.0",
+            "tx": "P1.1"
+          },
+          {
+            "selector": 1,
+            "rx": "P4.6",
+            "tx": "P4.7"
+          },
+          {
+            "selector": 2,
+            "rx": "P8.4",
+            "tx": "P8.5"
+          },
+          {
+            "selector": 3,
+            "rx": "PA.0",
+            "tx": "PA.1"
+          }
+        ]
+      },
+      {
+        "controller": 3,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "rx": "P0.0",
+            "tx": "P0.1"
+          },
+          {
+            "selector": 1,
+            "rx": "P5.0",
+            "tx": "P5.1"
+          },
+          {
+            "selector": 2,
+            "rx": "P8.6",
+            "tx": "P8.7"
+          },
+          {
+            "selector": 3,
+            "rx": "PB.6",
+            "tx": "PB.7"
+          }
+        ]
+      },
+      {
+        "controller": 4,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "rx": "P0.2",
+            "tx": "P0.3"
+          },
+          {
+            "selector": 1,
+            "rx": "P5.2",
+            "tx": "P5.3"
+          },
+          {
+            "selector": 2,
+            "rx": "PA.2",
+            "tx": "PA.3"
+          }
+        ]
+      },
+      {
+        "controller": 5,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "rx": "P0.4",
+            "tx": "P0.5"
+          },
+          {
+            "selector": 1,
+            "rx": "P4.0",
+            "tx": "P4.1"
+          },
+          {
+            "selector": 2,
+            "rx": "P1.4",
+            "tx": "P1.5"
+          },
+          {
+            "selector": 3,
+            "rx": "P2.0",
+            "tx": "P2.1"
+          }
+        ]
+      },
+      {
+        "controller": 6,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "rx": "P0.6",
+            "tx": "P0.7"
+          },
+          {
+            "selector": 1,
+            "rx": "P6.2",
+            "tx": "P6.3"
+          },
+          {
+            "selector": 2,
+            "rx": "P3.2",
+            "tx": "P3.3"
+          },
+          {
+            "selector": 3,
+            "rx": "P2.6",
+            "tx": "P2.7"
+          }
+        ]
+      },
+      {
+        "controller": 7,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "rx": "P5.0",
+            "tx": "P5.1"
+          },
+          {
+            "selector": 1,
+            "rx": "PA.4",
+            "tx": "PA.5"
+          },
+          {
+            "selector": 2,
+            "rx": "P9.0",
+            "tx": "P9.1"
+          }
+        ]
+      },
+      {
+        "controller": 8,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "rx": "P5.2",
+            "tx": "P5.3"
+          },
+          {
+            "selector": 1,
+            "rx": "PA.6",
+            "tx": "PA.7"
+          },
+          {
+            "selector": 2,
+            "rx": "P9.2",
+            "tx": "P9.3"
+          },
+          {
+            "selector": 3,
+            "rx": "P6.0",
+            "tx": "P6.1"
+          }
+        ]
+      }
+    ],
+    "i2c": [
+      {
+        "controller": 1,
+        "default_route": 3,
+        "routes": [
+          {
+            "selector": 0,
+            "sda": "P1.4",
+            "scl": "P1.5"
+          },
+          {
+            "selector": 1,
+            "sda": "P2.4",
+            "scl": "P2.5"
+          },
+          {
+            "selector": 2,
+            "sda": "P7.6",
+            "scl": "P7.7"
+          },
+          {
+            "selector": 3,
+            "sda": "P3.3",
+            "scl": "P3.2"
+          }
+        ]
+      },
+      {
+        "controller": 2,
+        "default_route": 0,
+        "routes": [
+          {
+            "selector": 0,
+            "sda": "P2.6",
+            "scl": "P2.7"
+          },
+          {
+            "selector": 1,
+            "sda": "P3.6",
+            "scl": "P3.7"
+          },
+          {
+            "selector": 2,
+            "sda": "P1.6",
+            "scl": "P1.7"
+          },
+          {
+            "selector": 3,
+            "sda": "P6.0",
+            "scl": "P6.1"
+          }
+        ]
+      }
+    ],
+    "spi": [
+      {
+        "controller": 1,
+        "default_route": 0,
+        "default_ss_gpio": "P5.4",
+        "routes": [
+          {
+            "selector": 0,
+            "mosi": "P1.3",
+            "miso": "P1.4",
+            "sck": "P1.5"
+          },
+          {
+            "selector": 1,
+            "mosi": "P2.3",
+            "miso": "P2.4",
+            "sck": "P2.5"
+          },
+          {
+            "selector": 2,
+            "mosi": "P4.0",
+            "miso": "P4.1",
+            "sck": "P4.3"
+          },
+          {
+            "selector": 3,
+            "mosi": "P3.4",
+            "miso": "P3.3",
+            "sck": "P3.2"
+          }
+        ]
+      },
+      {
+        "controller": 2,
+        "default_route": 0,
+        "default_ss_gpio": "P6.4",
+        "routes": [
+          {
+            "selector": 0,
+            "mosi": "P6.5",
+            "miso": "P6.6",
+            "sck": "P6.7"
+          },
+          {
+            "selector": 1,
+            "mosi": "P0.3",
+            "miso": "P0.4",
+            "sck": "P0.5"
+          },
+          {
+            "selector": 2,
+            "mosi": "PB.2",
+            "miso": "PB.3",
+            "sck": "PB.4"
+          },
+          {
+            "selector": 3,
+            "mosi": "P8.1",
+            "miso": "P8.2",
+            "sck": "P8.3"
+          }
+        ]
+      },
+      {
+        "controller": 3,
+        "default_route": 0,
+        "default_ss_gpio": "P2.2",
+        "routes": [
+          {
+            "selector": 0,
+            "mosi": "P2.3",
+            "miso": "P2.4",
+            "sck": "P2.5"
+          },
+          {
+            "selector": 1,
+            "mosi": "P7.1",
+            "miso": "P7.2",
+            "sck": "P7.3"
+          },
+          {
+            "selector": 2,
+            "mosi": "P8.5",
+            "miso": "P8.6",
+            "sck": "P8.7"
+          },
+          {
+            "selector": 3,
+            "mosi": "P9.1",
+            "miso": "P9.2",
+            "sck": "P9.3"
+          }
+        ]
+      }
+    ],
+    "communication_source": "https://www.stcmicro.com/datasheet/STC32G144K246-cn.pdf",
     "uart1_buffered_rx": true,
     "timer0_clock_divider": 12,
     "adc": {

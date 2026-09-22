@@ -6,6 +6,7 @@
 
 #include "stcxx_config.h"
 #include "Stream.h"
+#include "stc_family.h"
 
 #ifndef WIRE_BUFFER_LENGTH
 # define WIRE_BUFFER_LENGTH 32u
@@ -38,6 +39,9 @@
 class TwoWire : public Stream
 {
 public:
+    /* bus=0 is Wire, bus=1 is Wire1 when present. Unavailable buses are
+     * inert and report WIRE_STATUS_OTHER_ERROR through configurationError(). */
+    explicit TwoWire(uint8_t bus = 0) : _bus(bus) {}
     void begin();
     void begin(uint8_t address);
     void onReceive(void (*callback)(int));
@@ -73,8 +77,13 @@ public:
     int available();
     int read();
     int peek();
+private:
+    uint8_t _bus;
 };
 
 extern TwoWire Wire;
+#if STC_CORE_I2C_COUNT > 1
+extern TwoWire Wire1;
+#endif
 
 #endif

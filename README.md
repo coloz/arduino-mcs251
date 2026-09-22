@@ -2,7 +2,7 @@
 
 编译驱动由配套 [stcxx/compiler](../stcxx/compiler/) 统一维护，基础运行库与宿主锁来自 [stcxx/sdk](../stcxx/sdk/)。重建驱动时需将两个仓库并列放置；已安装的开发板包无需源码仓库。独立于 Arduino 的 C/C++ 编译见 [STCXX SDK 使用说明](../stcxx/sdk/README.md)。
 
-面向 STC **MCS251** 芯片的 Arduino core。当前版本 **0.0.1**，支持 Windows x64 和 Apple Silicon macOS 15+，仅维护 10 个型号；所有型号固定使用 `-mmcs251`，Arduino 架构标识为 `mcs251`。
+面向 STC **MCS251** 芯片的 Arduino core。当前版本 **0.0.2**，支持 Windows x64 和 Apple Silicon macOS 15+，仅维护 10 个型号；所有型号固定使用 `-mmcs251`，Arduino 架构标识为 `mcs251`。
 
 MCS51 芯片、板项和 C++ 适配路径已移除。旧的 MCS51 FQBN 不再适用，需要重新安装当前源码并选择新板项。工程目录为 `arduino-mcs251`。
 
@@ -16,7 +16,7 @@ Arduino 构建入口为 Rust 原生 **`stcxx.exe` / `stcxx`**，直接调度 Cla
 
 SDK 通过原生构建适配入口兼容未经修改的 aily-builder 1.2.17：对象文件封装完整编译数据，归档支持标准 rcs 调用，并通过标准配方导出 HEX。Arduino CLI 使用同一入口。升级后请清理旧构建缓存。实现与格式约定见 [aily-builder 适配说明](tools/stcxx-driver/README.md#aily-builder)。Windows x64 和 Apple Silicon macOS 15+ 使用各自的原生构建。
 
-0.0.1 提供 Windows x64 和 Apple Silicon 原生安装包，发布说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。源码构建使用 `node scripts/build-native-driver.mjs`。
+0.0.2 提供 Windows x64 和 Apple Silicon 原生安装包，发布说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。源码构建使用 `node scripts/build-native-driver.mjs`。
 
 ## 安装
 
@@ -26,18 +26,18 @@ SDK 通过原生构建适配入口兼容未经修改的 aily-builder 1.2.17：�
 https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
 ```
 
-在开发板管理器中安装 **mcs251 0.0.1**，然后选择对应型号。Arduino CLI 可使用：
+在开发板管理器中安装 **mcs251 0.0.2**，然后选择对应型号。Arduino CLI 可使用：
 
 ```powershell
 arduino-cli core update-index --additional-urls https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
-arduino-cli core install stc:mcs251@0.0.1 --additional-urls https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
+arduino-cli core install stc:mcs251@0.0.2 --additional-urls https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
 ```
 
-安装资源见 [v0.0.1 Release](https://github.com/coloz/arduino-mcs251/releases/tag/v0.0.1)。使用上述索引安装 `stc:mcs251@0.0.1`，并选择对应板卡。如果已有安装，请先卸载后重新安装，清理构建缓存并重新编译。
+安装资源见 [v0.0.2 Release](https://github.com/coloz/arduino-mcs251/releases/tag/v0.0.2)。使用上述索引安装 `stc:mcs251@0.0.2`，并选择对应板卡。如果已有安装，请先卸载后重新安装，清理构建缓存并重新编译。
 
 从旧包迁移时，需安装 `stc:mcs251` 并重新选择板卡，将项目和脚本中的旧 FQBN 前缀改为 `stc:mcs251:`；旧包的版本升级不会自动完成迁移。确认新包可用后，可卸载旧包。手动安装源码时，平台目录应为 `<sketchbook>/hardware/stc/mcs251`；开发板管理器安装路径为 `packages/stc/hardware/mcs251/<version>`。
 
-0.0.1 开发板管理器包安装 `stcxx-toolchain` `0.3.0` 和 `stc-cli` `0.1.0-stc.2` 两项工具。原生打包器只保留 Clang、LLVM-CBE、SDCC 及其原生辅助程序、头文件、运行库和许可证，不携带解释器。C++ 编译流程仍为 Clang → LLVM-CBE → SDCC，`stc-cli` 继续负责 UART 和原生 USB 上传，并支持新 CDC 的 1200 bps 复位。
+0.0.2 开发板管理器包安装 `stcxx-toolchain` `0.3.0` 和 `stc-cli` `0.1.0-stc.2` 两项工具。原生打包器只保留 Clang、LLVM-CBE、SDCC 及其原生辅助程序、头文件、运行库和许可证，不携带解释器。C++ 编译流程仍为 Clang → LLVM-CBE → SDCC，`stc-cli` 继续负责 UART 和原生 USB 上传，并支持新 CDC 的 1200 bps 复位。
 
 ## 支持型号
 
@@ -94,7 +94,7 @@ $build.firmware
 
 C++ 使用 Clang → LLVM-CBE → SDCC，提供 `String`、`Print`、`Stream`、`HardwareSerial`、`SPIClass`、`TwoWire` 等接口。所有板项默认使用 12 MHz，时钟菜单仅列出编译链支持的配置；AI8051U-34K64 另有 40 MHz、STC32G144K246 另有 48 MHz。编译时钟必须与芯片实际时钟一致，菜单不会替代 ISP 时钟配置。
 
-支持 GPIO、计时、UART1、按型号提供的 ADC/PWM/外部中断，以及 Wire、SPI、SoftwareSerial、LiquidCrystal、Stepper 和受限的 SD。接口以 [Arduino.h](cores/STC/Arduino.h) 和各库头文件为准，使用示例位于 `libraries/<库名>/examples`。总线和 GPIO 共用引脚，使用前核对型号和封装。
+支持 GPIO、计时、按型号提供的多路硬件串口、ADC/PWM/外部中断，以及 Wire、SPI、SoftwareSerial、LiquidCrystal、Stepper 和受限的 SD。串口提供 `Serial1`～`Serial4`，STC32G144K246 扩展到 `Serial8`；STC32CL 当前封装未引出 UART2，因此没有 `Serial2`。G144 另有独立第二路 IIC `Wire1` 和三路 SPI 对象 `SPI`、`SPI1`、`SPI2`。接口以 [Arduino.h](cores/STC/Arduino.h) 和各库头文件为准，数量与引脚见 [变体说明](variants/README.md)，尚未适配的硬件功能见 [接口检查](variants/HARDWARE_INTERFACES.md)，使用示例位于 `libraries/<库名>/examples`。总线和 GPIO 共用引脚，使用前核对型号和封装。
 
 平台提供 [USB HID](libraries/HID/README.md)、[Keyboard](libraries/Keyboard/README.md)、[Mouse](libraries/Mouse/README.md) 和 [CAN](libraries/CAN/README.md) 通信库，随 core 平台包一同安装。键鼠 API 移植自 Arduino 官方库；CAN 提供 `HardwareCAN` / `CanMsg` 风格接口和独立的分包适配器。HID 按型号支持 G12、G144、AI8051U，CAN 支持 G12、G8、CL、G144；AI8051U-34K16 当前只能容纳较小的自定义 HID 示例，键鼠示例超出 Flash。各库说明包含支持型号、接线和示例索引。
 

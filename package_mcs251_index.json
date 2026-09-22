@@ -12,6 +12,60 @@
         {
           "name": "mcs251",
           "architecture": "mcs251",
+          "version": "0.0.2",
+          "category": "Contributed",
+          "url": "https://github.com/coloz/arduino-mcs251/releases/download/v0.0.2/arduino-mcs251-0.0.2.zip",
+          "archiveFileName": "arduino-mcs251-0.0.2.zip",
+          "checksum": "SHA-256:2fdc5a9efd3afa9a7f02b994f453ba31bd3ad0321659bf542c758e781b30212b",
+          "size": "3999771",
+          "boards": [
+            {
+              "name": "STC32G12K128"
+            },
+            {
+              "name": "STC32G144K246"
+            },
+            {
+              "name": "STC32G8K64"
+            },
+            {
+              "name": "STC32CL8K64"
+            },
+            {
+              "name": "AI8051U-34K64"
+            },
+            {
+              "name": "STC32G12K64"
+            },
+            {
+              "name": "STC32G8K48"
+            },
+            {
+              "name": "STC32CL8K48"
+            },
+            {
+              "name": "AI8051U-34K32"
+            },
+            {
+              "name": "AI8051U-34K16"
+            }
+          ],
+          "toolsDependencies": [
+            {
+              "packager": "stc",
+              "name": "stcxx-toolchain",
+              "version": "0.3.0"
+            },
+            {
+              "packager": "stc",
+              "name": "stc-cli",
+              "version": "0.1.0-stc.2"
+            }
+          ]
+        },
+        {
+          "name": "mcs251",
+          "architecture": "mcs251",
           "version": "0.0.1",
           "category": "Contributed",
           "url": "https://github.com/coloz/arduino-mcs251/releases/download/v0.0.1/arduino-mcs251-0.0.1.zip",

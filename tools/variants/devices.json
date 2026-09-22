@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "as_of": "2026-09-13",
+  "as_of": "2026-09-23",
   "pin_encoding": "(port << 4) | bit",
   "notes": [
     "STC8A8K64S4A12 and STC32F12K54 are excluded from the supported device set.",
@@ -38,7 +38,12 @@
         "port_mode": true,
         "timer1_1t": true,
         "usb_layout": 1,
-        "can_layout": 1
+        "can_layout": 1,
+        "uart_count": 4,
+        "i2c_count": 1,
+        "wire_layout": 1,
+        "spi_count": 1,
+        "spi_layout": 1
       },
       "adc": {
         "layout": "modern_bc_adccfg",
@@ -130,7 +135,11 @@
         "timer0_clock_divider": 12,
         "timer1_1t": true,
         "usb_layout": 2,
-        "can_layout": 2
+        "can_layout": 2,
+        "uart_count": 8,
+        "i2c_count": 2,
+        "spi_count": 3,
+        "spi_layout": 2
       },
       "adc": {
         "layout": "modern_bc_adccfg",
@@ -225,7 +234,12 @@
         "port_mode": true,
         "timer1_1t": true,
         "usb_layout": 0,
-        "can_layout": 1
+        "can_layout": 1,
+        "uart_count": 4,
+        "i2c_count": 1,
+        "wire_layout": 1,
+        "spi_count": 1,
+        "spi_layout": 1
       },
       "adc": {
         "layout": "modern_bc_adccfg",
@@ -310,7 +324,12 @@
         "bus_layout": 1,
         "separate_pullup": true,
         "usb_layout": 0,
-        "can_layout": 1
+        "can_layout": 1,
+        "uart_count": 4,
+        "i2c_count": 1,
+        "wire_layout": 1,
+        "spi_count": 1,
+        "spi_layout": 1
       },
       "adc": {
         "layout": "modern_bc_adccfg",
@@ -400,7 +419,12 @@
         "port_mode": true,
         "timer1_1t": true,
         "usb_layout": 1,
-        "can_layout": 0
+        "can_layout": 0,
+        "uart_count": 4,
+        "i2c_count": 1,
+        "wire_layout": 0,
+        "spi_count": 1,
+        "spi_layout": 3
       },
       "adc": {
         "layout": "modern_bc_adccfg",
@@ -492,7 +516,12 @@
         "port_mode": true,
         "timer1_1t": true,
         "usb_layout": 1,
-        "can_layout": 1
+        "can_layout": 1,
+        "uart_count": 4,
+        "i2c_count": 1,
+        "wire_layout": 1,
+        "spi_count": 1,
+        "spi_layout": 1
       },
       "adc": {
         "layout": "modern_bc_adccfg",
@@ -576,7 +605,12 @@
         "port_mode": true,
         "timer1_1t": true,
         "usb_layout": 0,
-        "can_layout": 1
+        "can_layout": 1,
+        "uart_count": 4,
+        "i2c_count": 1,
+        "wire_layout": 1,
+        "spi_count": 1,
+        "spi_layout": 1
       },
       "adc": {
         "layout": "modern_bc_adccfg",
@@ -662,7 +696,12 @@
         "bus_layout": 1,
         "separate_pullup": true,
         "usb_layout": 0,
-        "can_layout": 1
+        "can_layout": 1,
+        "uart_count": 4,
+        "i2c_count": 1,
+        "wire_layout": 1,
+        "spi_count": 1,
+        "spi_layout": 1
       },
       "adc": {
         "layout": "modern_bc_adccfg",
@@ -753,7 +792,12 @@
         "port_mode": true,
         "timer1_1t": true,
         "usb_layout": 1,
-        "can_layout": 0
+        "can_layout": 0,
+        "uart_count": 4,
+        "i2c_count": 1,
+        "wire_layout": 0,
+        "spi_count": 1,
+        "spi_layout": 3
       },
       "adc": {
         "layout": "modern_bc_adccfg",
@@ -846,7 +890,12 @@
         "port_mode": true,
         "timer1_1t": true,
         "usb_layout": 1,
-        "can_layout": 0
+        "can_layout": 0,
+        "uart_count": 4,
+        "i2c_count": 1,
+        "wire_layout": 0,
+        "spi_count": 1,
+        "spi_layout": 3
       },
       "adc": {
         "layout": "modern_bc_adccfg",

@@ -33,7 +33,7 @@ void loop() {
 | `Serial`，CDC On Boot 启用 | 原生 USB CDC |
 | `Serial`，CDC On Boot 禁用 | UART1 |
 | `USBSerial` / `SerialUSB` | 同一个 USB CDC 对象 |
-| `Serial1` / `Serial0` | 同一个 UART1 对象，RX=P3.0、TX=P3.1 |
+| `Serial1` / `Serial0` | 同一个 UART1 对象，默认 RX=P3.0、TX=P3.1，可选择其他完整引脚组 |
 | `USB` / `USBDevice` | 同一个 USB 设备控制对象 |
 
 显式 USB 串口可以保持菜单 Disabled（16 KB 型号除外）：
@@ -77,17 +77,20 @@ RX/TX 各使用 128 字节固定环形缓冲；RX 满时通过 USB NAK 让主机
 程序可能超限。禁用 CDC 时保留独立 HID；显式 `USBSerial` 也需要启用 CDC 菜单。
 G12 启用 CDC 时默认动态堆从 6 KB 调整为 4 KB，给 CDC + HID 静态缓冲预留空间。
 
-2026-09-17 的 G144 实板在默认低地址 XRAM 布局下出现二进制数据位错误；仅将 XRAM
+2026-09-17 的 G144 实板在当时默认的低地址 XRAM 布局下出现二进制数据位错误；仅将 XRAM
 改为高地址区后，CDC 和 CDC + HID 收发测试通过。为这块板选择
 **工具 → XRAM layout → High bank 64 KiB (0x020000)**，CPU clock 选择实测的 **48 MHz**。
-此选项将可用 XRAM 限制为 64 KiB，不改变 Flash 或芯片硬件选项；默认仍保留 128 KiB 布局。
+当前默认已采用高地址 64 KiB 布局；原 128 KiB 布局保留为实验选项 `xram=default`。
+高地址选项将可用 XRAM 限制为 64 KiB，不改变 Flash 或芯片硬件选项。
 这是当前样板的已验证绕过方式，尚不能据此判定所有 G144 都存在同样问题，或认定芯片物理损坏。
 对应 CLI 参数为 `stc:mcs251:stc32g144k246:cdc=enabled,clock=48m,xram=high`。
 
 USB 使用独立 IRC48M，不改变 CPU 时钟；接线以型号和封装引脚图为准。
-**P3.0/P3.1 也是默认 UART1 引脚，不能同时运行 UART1 和原生 USB。**
+**P3.0/P3.1 也是默认 UART1 引脚，UART1 使用这组引脚时不能与原生 USB 同时运行。**
 核心拒绝后启动的冲突外设：UART 检查 `configurationError()`，USB 返回 `STC_USB_BUSY`。
-若还需要连接串口模块，应使用另一套串口实现和独立引脚。
+若还需要连接串口模块，可在 `Serial1.begin()` 前使用 `Serial1.setPinsChecked(rx, tx)`
+选择其他完整 UART1 引脚组，或使用该型号提供的 `Serial2`～`Serial8`。可用端口与引脚组见
+[变体说明](../../variants/README.md)；应避免与 USB 和其他外设共用物理引脚。
 
 ## CDC 与 HID 共存
 

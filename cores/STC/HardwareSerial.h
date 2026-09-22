@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "Stream.h"
+#include "stc_family.h"
 
 #define SERIAL_5N1 0x00u
 #define SERIAL_6N1 0x02u
@@ -33,14 +34,34 @@
 
 #define STCXX_SERIAL_CONFIG_8N1_ONLY 1
 
+struct HardwareSerialBackend {
+    bool (*begin)(uint8_t, unsigned long);
+    void (*end)(uint8_t);
+    bool (*setPins)(uint8_t, uint8_t, uint8_t);
+    int (*available)(uint8_t);
+    int (*peek)(uint8_t);
+    int (*read)(uint8_t);
+    int (*availableForWrite)(uint8_t);
+    void (*flush)(uint8_t);
+    size_t (*write)(uint8_t, uint8_t);
+    bool (*overflow)(uint8_t);
+};
+
 class HardwareSerial : public Stream
 {
 public:
-    HardwareSerial() : _configurationError(false) {}
+    HardwareSerial();
+    /* Numbered construction is for available UART2..UART8 only. Use the
+     * default constructor or Serial1 for UART1 so unused drivers stay unlinked.
+     * An unavailable number starts with configurationError() set. */
+    explicit HardwareSerial(uint8_t port);
 
     void begin(unsigned long baud) { begin(baud, SERIAL_8N1); }
     void begin(unsigned long baud, uint16_t configuration);
     void end();
+    /* Select a complete hardware RX/TX route before begin(), or after end(). */
+    bool setPinsChecked(uint8_t rx, uint8_t tx);
+    void setPins(uint8_t rx, uint8_t tx) { (void)setPinsChecked(rx, tx); }
     int available();
     int peek();
     int read();
@@ -59,10 +80,23 @@ public:
     operator bool() const { return !_configurationError; }
 
 private:
+    uint8_t _port;
+    const HardwareSerialBackend *_backend;
     bool _configurationError;
 };
 
 extern HardwareSerial Serial1;
+#if STC_CORE_UART_AVAILABLE_MASK & 2
+extern HardwareSerial Serial2;
+#endif
+extern HardwareSerial Serial3;
+extern HardwareSerial Serial4;
+#if STC_CORE_UART_COUNT > 4
+extern HardwareSerial Serial5;
+extern HardwareSerial Serial6;
+extern HardwareSerial Serial7;
+extern HardwareSerial Serial8;
+#endif
 namespace arduino {
 using ::HardwareSerial;
 }

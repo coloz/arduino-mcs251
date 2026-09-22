@@ -2,6 +2,18 @@
 #define STC_CORE_FAMILY_H
 
 #define STC_ADC_LAYOUT_NONE                    0
+/* Hardware controller counts, and UARTs with pins in this variant's mask. */
+#if !defined(STC_CORE_UART_COUNT) || !defined(STC_CORE_I2C_COUNT) || \
+    !defined(STC_CORE_UART_AVAILABLE_MASK) || !defined(STC_CORE_SPI_COUNT) || !defined(STC_CORE_SPI_LAYOUT)
+# error "Selected board is missing generated UART/I2C/SPI capabilities"
+#endif
+#if (STC_CORE_UART_COUNT != 4 && STC_CORE_UART_COUNT != 8) || \
+    (STC_CORE_I2C_COUNT != 1 && STC_CORE_I2C_COUNT != 2) || \
+    (STC_CORE_SPI_COUNT != 1 && STC_CORE_SPI_COUNT != 3) || \
+    (STC_CORE_SPI_LAYOUT < 1 || STC_CORE_SPI_LAYOUT > 3) || \
+    ((STC_CORE_SPI_COUNT == 3) != (STC_CORE_SPI_LAYOUT == 2))
+# error "Unsupported UART/I2C/SPI capabilities"
+#endif
 /* USB SIE: 1=STC32G12K/AI8051U, 2=G144. CAN: 1=classic, 2=G144 FD. */
 #ifndef STC_CORE_USB_LAYOUT
 # define STC_CORE_USB_LAYOUT 0

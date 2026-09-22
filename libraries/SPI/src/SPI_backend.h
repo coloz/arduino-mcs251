@@ -80,6 +80,7 @@ extern "C" {
 #endif
 
 void SPI_begin(void) STC_SPI_REENTRANT;
+uint8_t SPI_usingHardware(void) STC_SPI_REENTRANT;
 #define STC_SPI_OK 0u
 #define STC_SPI_INVALID 1u
 #define STC_SPI_BUSY 2u

@@ -7,6 +7,15 @@
  * changes are made while interrupts are off. */
 STC_IRQ_DATA stc_peripheral_service_t stc_tone_service;
 STC_IRQ_DATA stc_peripheral_service_t stc_wire_slave_service;
+#if STC_CORE_I2C_COUNT > 1
+STC_IRQ_DATA stc_peripheral_service_t stc_wire1_slave_service;
+void stc_i2c2_isr(void) __interrupt (109)
+{
+    STC_ISR_CONTEXT_ENTER();
+    if (stc_wire1_slave_service) stc_wire1_slave_service();
+    STC_ISR_CONTEXT_LEAVE();
+}
+#endif
 void stc_timer2_isr(void) __interrupt (12)
 {
     STC_ISR_CONTEXT_ENTER();
