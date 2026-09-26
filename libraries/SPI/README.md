@@ -62,7 +62,7 @@ and `detachInterrupt` remain compatibility no-ops: no SPI completion callback
 is exposed.
 
 Resource coverage and remaining driver gaps are listed in
-[HARDWARE_INTERFACES.md](../../variants/HARDWARE_INTERFACES.md). Register and mux sources:
+[variant README](../../variants/README.md). Register and mux sources:
 [STC32G manual](https://www.stcmicro.com/datasheet/stc32g-cn.pdf),
 [G144 manual, chapter 25](https://www.stcmicro.com/datasheet/STC32G144K246-cn.pdf),
 [AI8051U pin tables](https://www.stcmicro.com/datasheet/Ai8051U_Features.pdf).

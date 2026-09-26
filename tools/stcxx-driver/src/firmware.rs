@@ -31,7 +31,10 @@ pub fn from_hex(hex: &[u8]) -> Result<Vec<u8>> {
     {
         let line = line.trim();
         ensure!(
-            !eof && line.starts_with(':') && line.len() % 2 == 1,
+            !eof && line.starts_with(':')
+                && line.is_ascii()
+                && line.len() % 2 == 1
+                && line.len() <= 521,
             "invalid HEX record"
         );
         let r = (1..line.len())
@@ -72,12 +75,21 @@ pub fn from_hex(hex: &[u8]) -> Result<Vec<u8>> {
             }
             3 | 5 => {
                 ensure!(data.len() == 4 && addr == 0, "invalid HEX entry point");
-                entry = Some(if r[3] == 5 {
+                let address = if r[3] == 5 {
                     u32::from_be_bytes(data.try_into()?)
                 } else {
                     ((u16::from_be_bytes(data[..2].try_into()?) as u32) << 4)
                         + u16::from_be_bytes(data[2..].try_into()?) as u32
-                });
+                };
+                ensure!(
+                    address <= 0xffffff,
+                    "entry point exceeds MCS251 address space"
+                );
+                ensure!(
+                    entry.is_none_or(|previous| previous == address),
+                    "conflicting HEX entry points"
+                );
+                entry = Some(address);
             }
             _ => bail!("unsupported HEX record"),
         }
@@ -134,11 +146,19 @@ fn record(out: &mut String, kind: u8, address: u16, data: &[u8]) {
 
 pub fn to_hex(elf: &[u8]) -> Result<Vec<u8>> {
     ensure!(
-        elf.starts_with(b"\x7fELF\x01\x01\x01")
+        elf.len() >= 52
+            && elf.starts_with(b"\x7fELF\x01\x01\x01")
             && u16_at(elf, 16)? == 2
             && u16_at(elf, 18)? == 165
+            && u32_at(elf, 20)? == 1
+            && u16_at(elf, 40)? == 52
             && u16_at(elf, 42)? == 32,
         "expected STC ELF32 load image"
+    );
+    let entry = u32_at(elf, 24)?;
+    ensure!(
+        entry <= 0xffffff,
+        "entry point exceeds MCS251 address space"
     );
     let mut image = BTreeMap::new();
     let phoff = u32_at(elf, 28)? as usize;
@@ -165,6 +185,15 @@ pub fn to_hex(elf: &[u8]) -> Result<Vec<u8>> {
         }
     }
     ensure!(!image.is_empty(), "empty ELF image");
+    // The bundled uploader accepts data/address/EOF records only. Do not
+    // silently discard a custom ELF entry, or add an unsupported type-05
+    // record to every otherwise uploadable Arduino firmware.
+    ensure!(
+        image
+            .first_key_value()
+            .is_some_and(|(first, _)| *first == entry),
+        "custom ELF entry point cannot be represented in the uploader's HEX format"
+    );
     let mut out = String::new();
     let mut high = None;
     let mut iter = image.into_iter().peekable();
@@ -190,6 +219,91 @@ pub fn to_hex(elf: &[u8]) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn malformed_hex_is_an_error_not_a_panic() {
+        for hex in [
+            ":0中",
+            ":0é0",
+            ":GG000001FF",
+            ":",
+            ":00000001FF\n:00000001FF",
+        ] {
+            assert!(from_hex(hex.as_bytes()).is_err(), "accepted {hex:?}");
+        }
+    }
+
+    #[test]
+    fn roundtrip_accepts_redundant_entry_points_without_upload_incompatible_records() {
+        for (kind, entry, expected) in [
+            (5, [0x00, 0x08, 0x00, 0x20], 0x080020),
+            (3, [0x12, 0x34, 0x00, 0x56], 0x012396),
+        ] {
+            let mut hex = String::new();
+            record(&mut hex, 4, 0, &((expected >> 16) as u16).to_be_bytes());
+            record(&mut hex, 0, expected as u16, &[0x02, 0, 0x20]);
+            record(&mut hex, kind, 0, &entry);
+            record(&mut hex, 1, 0, &[]);
+            let elf = from_hex(hex.as_bytes()).unwrap();
+            assert_eq!(u32_at(&elf, 24).unwrap(), expected);
+            assert_eq!(from_hex(&to_hex(&elf).unwrap()).unwrap(), elf);
+        }
+    }
+
+    #[test]
+    fn custom_entry_point_is_not_silently_discarded() {
+        let mut hex = String::new();
+        record(&mut hex, 0, 0, &[0x02, 0, 0x20]);
+        record(&mut hex, 5, 0, &[0, 0, 0, 0x20]);
+        record(&mut hex, 1, 0, &[]);
+        let elf = from_hex(hex.as_bytes()).unwrap();
+        assert_eq!(u32_at(&elf, 24).unwrap(), 0x20);
+        assert!(
+            to_hex(&elf)
+                .unwrap_err()
+                .to_string()
+                .contains("custom ELF entry")
+        );
+    }
+
+    #[test]
+    fn invalid_or_conflicting_entry_points_are_rejected() {
+        let mut hex = String::new();
+        record(&mut hex, 0, 0, &[0]);
+        record(&mut hex, 5, 0, &[1, 0, 0, 0]);
+        record(&mut hex, 1, 0, &[]);
+        assert!(from_hex(hex.as_bytes()).is_err());
+
+        hex.clear();
+        record(&mut hex, 0, 0, &[0]);
+        record(&mut hex, 5, 0, &[0, 0, 0, 0]);
+        record(&mut hex, 5, 0, &[0, 0, 0, 1]);
+        record(&mut hex, 1, 0, &[]);
+        assert!(from_hex(hex.as_bytes()).is_err());
+
+        let mut elf = from_hex(b":0100000000FF\n:00000001FF\n").unwrap();
+        put32(&mut elf, 24, 0x1000000);
+        assert!(to_hex(&elf).is_err());
+    }
+
+    #[test]
+    fn damaged_elf_headers_and_tables_are_rejected() {
+        let elf = from_hex(b":0100000000FF\n:00000001FF\n").unwrap();
+        for length in 0..elf.len() {
+            assert!(to_hex(&elf[..length]).is_err());
+        }
+        for (offset, value) in [(20, 2), (28, u32::MAX)] {
+            let mut damaged = elf.clone();
+            put32(&mut damaged, offset, value);
+            assert!(to_hex(&damaged).is_err());
+        }
+        for (offset, value) in [(40, 0), (42, 0), (44, u16::MAX)] {
+            let mut damaged = elf.clone();
+            put16(&mut damaged, offset, value);
+            assert!(to_hex(&damaged).is_err());
+        }
+    }
+
     #[test]
     fn load_image_roundtrip_preserves_sparse_24_bit_flash() {
         let mut hex = String::new();

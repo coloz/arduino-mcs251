@@ -110,6 +110,11 @@ the standalone toolchain's `bin/` directory, which has no Arduino adapter.
 Existing raw `.o`/`.a` build caches must be cleaned once after this format change.
 The standalone compiler's artifact format and C/C++ implementation are unchanged.
 Run SDK adapter tests with `cargo test --manifest-path tools/stcxx-driver/Cargo.toml`.
+The adapter rejects malformed HEX/ELF input and conflicting or out-of-range
+entry points. Exported HEX retains the uploader's data/address/EOF-only format;
+a custom ELF entry differing from the first load address fails explicitly
+instead of being silently lost. The sketch hook reports missing source
+directories and conflicts with modified generated files before replacing them.
 Windows x64 and Apple Silicon macOS 15+ use separately built native binaries.
 Qualify both hosts before publishing a combined SDK archive.
 

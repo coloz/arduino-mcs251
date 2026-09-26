@@ -30,7 +30,7 @@ Arduino 头文件，也不直接调用 `Serial_*`；`hal/stcxx_console.c` 提供
 ## 构建与兼容范围
 
 公共类以 ArduinoCore-API 1.5.2 为兼容基线，已实现接口和硬件限制见
-[兼容性说明](../../COMPATIBILITY.md)。
+[平台 README](../../README.md) 和各库 README。
 
 目录迁移后必须重建原生驱动，并清理旧 Arduino core 缓存。平台配方中的
 `STC_CORE_LAYOUT=2` 参与缓存身份；发布包需分别重建 Windows 与 macOS 驱动。

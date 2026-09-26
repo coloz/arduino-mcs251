@@ -410,6 +410,6 @@
   "api_compatibility": {
     "baseline": "ArduinoCore-API 1.5.2",
     "reference": "https://github.com/arduino/ArduinoCore-API/tree/1.5.2",
-    "scope": "Source and behavior compatibility for the tested portable API; target hardware and ABI limits remain explicit in COMPATIBILITY.md"
+    "scope": "Source and behavior compatibility for the tested portable API; target hardware and ABI limits remain explicit in the platform and library README files"
   }
 }

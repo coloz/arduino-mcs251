@@ -10,6 +10,8 @@ unsigned long pulseInLong(uint8_t pin, uint8_t state,
         return 0UL;
     }
 
+    /* Arduino treats every nonzero state as HIGH. digitalRead returns 0/1. */
+    state = state != 0u ? HIGH : LOW;
     started = micros();
 
     while ((uint8_t)digitalRead(pin) == state) {

@@ -6,6 +6,7 @@
 
 #include "stcxx_allocator.h"
 #include "stcxx_libc.h"
+#include "NumberFormat.h"
 
 namespace {
 
@@ -23,23 +24,11 @@ unsigned int stcxx_format_unsigned(char *destination, unsigned long value,
                                    unsigned char base)
 {
     char reverse[8u * sizeof(unsigned long) + 1u];
-    unsigned int length = 0u;
-    unsigned int index;
-
-    if (base < 2u || base > 36u) {
-        base = 10u;
-    }
-    do {
-        unsigned char digit = (unsigned char)(value % base);
-        reverse[length++] = (char)(digit < 10u ? ('0' + digit)
-                                               : ('a' + digit - 10u));
-        value /= base;
-    } while (value != 0u);
-
-    for (index = 0u; index < length; ++index) {
-        destination[index] = reverse[length - index - 1u];
-    }
-    destination[length] = '\0';
+    char *end = reverse + sizeof(reverse) - 1u;
+    *end = '\0';
+    char *start = stc_detail::formatInteger(end, value, base, 'a');
+    unsigned int length = (unsigned int)(end - start);
+    memcpy(destination, start, length + 1u);
     return length;
 }
 
@@ -409,18 +398,17 @@ unsigned char String::concat(const char *value, unsigned int length)
         return 0u;
     }
     if (_buffer != 0) {
-        for (;;) {
-            if (value == _buffer + sourceOffset) {
-                if (length > _length - sourceOffset) {
-                    return 0u;
-                }
-                aliases = 1u;
-                break;
+        // The MCS251 generic pointer is a linear address. Compare integer
+        // addresses instead of scanning every character (or ordering pointers
+        // to unrelated objects). Keep an offset across a relocating realloc.
+        uintptr_t source = reinterpret_cast<uintptr_t>(value);
+        uintptr_t buffer = reinterpret_cast<uintptr_t>(_buffer);
+        if (source >= buffer && source - buffer <= _length) {
+            sourceOffset = (unsigned int)(source - buffer);
+            if (length > _length - sourceOffset) {
+                return 0u;
             }
-            if (sourceOffset == _length) {
-                break;
-            }
-            ++sourceOffset;
+            aliases = 1u;
         }
     }
     newLength = _length + length;
@@ -448,7 +436,14 @@ unsigned char String::concat(const char *value)
 
 unsigned char String::concat(char value)
 {
-    return concat(&value, 1u);
+    // A by-value byte cannot alias the buffer. Avoid pointer-range checks,
+    // generic memmove and a stack temporary on the readString/+= hot path.
+    if (_length >= UINT_MAX - 1u || reserve(_length + 1u) == 0u) {
+        return 0u;
+    }
+    _buffer[_length++] = value;
+    _buffer[_length] = '\0';
+    return 1u;
 }
 
 unsigned char String::concat(unsigned char value)

@@ -75,6 +75,7 @@ protected:
 
 private:
     int _writeError;
+    size_t writeFormatted(const char *buffer, size_t size);
     size_t printNumber(unsigned long value, uint8_t base);
     size_t printULLNumber(unsigned long long value, uint8_t base);
     size_t printFloat(double value, uint8_t digits);

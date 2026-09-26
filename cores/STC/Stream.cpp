@@ -110,6 +110,10 @@ bool Stream::findUntil(const char *target, size_t targetLength,
 
 int Stream::findMulti(MultiTarget *targets, int targetCount)
 {
+    // Public find/findUntil use at most two patterns. Keep short-pattern KMP
+    // failure links on the stack; long/custom MultiTarget searches retain the
+    // allocation-free fallback. No changes to byte consumption or timeouts.
+    uint8_t borders[2][32];
     if (targets == 0 || targetCount <= 0) {
         return -1;
     }
@@ -119,6 +123,18 @@ int Stream::findMulti(MultiTarget *targets, int targetCount)
         }
         if (targets[targetIndex].length == 0u) {
             return targetIndex;
+        }
+        if (targetIndex < 2 && targets[targetIndex].length <= 32u) {
+            const char *text = targets[targetIndex].text;
+            uint8_t matched = 0u;
+            borders[targetIndex][0] = 0u;
+            for (uint8_t i = 1u; i < targets[targetIndex].length; ++i) {
+                while (matched && text[i] != text[matched]) {
+                    matched = borders[targetIndex][matched - 1u];
+                }
+                if (text[i] == text[matched]) ++matched;
+                borders[targetIndex][i] = matched;
+            }
         }
     }
     for (;;) {
@@ -131,8 +147,9 @@ int Stream::findMulti(MultiTarget *targets, int targetCount)
             MultiTarget &target = targets[targetIndex];
             while (target.index != 0u &&
                    (char)input != target.text[target.index]) {
-                target.index =
-                    stcxx_stream_border_length(target.text, target.index);
+                target.index = targetIndex < 2 && target.length <= 32u
+                    ? borders[targetIndex][target.index - 1u]
+                    : stcxx_stream_border_length(target.text, target.index);
             }
             if ((char)input == target.text[target.index]) {
                 ++target.index;

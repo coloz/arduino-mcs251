@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "stcxx_libc.h"
+#include "NumberFormat.h"
 
 size_t Print::write(const uint8_t *buffer, size_t size)
 {
@@ -27,6 +28,17 @@ size_t Print::write(const char *text)
     return text == 0
                ? 0u
                : write(reinterpret_cast<const uint8_t *>(text), strlen(text));
+}
+
+// The 24-bit CBE/SDCC virtual-call sequence is sizeable. Share it between
+// numeric/CRLF writes instead of cloning it into each caller, while passing
+// the known length so no strlen is required. Public buffer writes stay inline.
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((noinline))
+#endif
+size_t Print::writeFormatted(const char *buffer, size_t size)
+{
+    return write(reinterpret_cast<const uint8_t *>(buffer), size);
 }
 
 size_t Print::print(const __FlashStringHelper *text)
@@ -144,7 +156,7 @@ size_t Print::print(const Printable &value)
 
 size_t Print::println()
 {
-    return write("\r\n");
+    return writeFormatted("\r\n", 2u);
 }
 
 #define STCXX_PRINTLN_IMPLEMENTATION(type)                \
@@ -192,36 +204,18 @@ size_t Print::println(double value, int digits)
 
 size_t Print::printNumber(unsigned long value, uint8_t base)
 {
-    char buffer[8u * sizeof(unsigned long) + 1u];
-    char *current = buffer + sizeof(buffer);
-    *--current = '\0';
-    if (base < 2u || base > 36u) {
-        base = 10u;
-    }
-    do {
-        uint8_t digit = (uint8_t)(value % base);
-        *--current = (char)(digit < 10u ? ('0' + digit)
-                                      : ('A' + digit - 10u));
-        value /= base;
-    } while (value != 0u);
-    return write(current);
+    char buffer[8u * sizeof(unsigned long)];
+    char *end = buffer + sizeof(buffer);
+    char *start = stc_detail::formatInteger(end, value, base, 'A');
+    return writeFormatted(start, (size_t)(end - start));
 }
 
 size_t Print::printULLNumber(unsigned long long value, uint8_t base)
 {
-    char buffer[8u * sizeof(unsigned long long) + 1u];
-    char *current = buffer + sizeof(buffer);
-    *--current = '\0';
-    if (base < 2u || base > 36u) {
-        base = 10u;
-    }
-    do {
-        uint8_t digit = (uint8_t)(value % base);
-        *--current = (char)(digit < 10u ? ('0' + digit)
-                                      : ('A' + digit - 10u));
-        value /= base;
-    } while (value != 0u);
-    return write(current);
+    char buffer[8u * sizeof(unsigned long long)];
+    char *end = buffer + sizeof(buffer);
+    char *start = stc_detail::formatInteger(end, value, base, 'A');
+    return writeFormatted(start, (size_t)(end - start));
 }
 
 size_t Print::printFloat(double value, uint8_t digits)

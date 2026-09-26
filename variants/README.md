@@ -80,7 +80,7 @@ SPI 硬件编号从 1 开始，Arduino 对象从 `SPI` 开始：G144 的 `SPI1` 
 
 GPIO 片选可由应用另选；未匹配硬件组、时钟不可确认或无法分频时使用软件 SPI。G144 硬件需有效的既有 HSIO/PLL 配置，本库不更改共享 PLL。用 `usingHardware()` 查询当前方式。更多用法和限制见 [SPI 文档](../libraries/SPI/README.md) 与 [HardwareBuses 示例](../libraries/SPI/examples/HardwareBuses/HardwareBuses.ino)。
 
-其他片上功能并未全部提供 Arduino 库，包括 EEPROM/IAP、RTC、G144 完整 CAN-FD、ADC2 和额外 PWM 等。完整清单见 [硬件接口适配检查](HARDWARE_INTERFACES.md)。
+其他片上功能并未全部提供 Arduino 库，包括 EEPROM/IAP、RTC、G144 完整 CAN-FD、ADC2 和额外 PWM 等。
 
 ## 配置来源与验证
 
@@ -92,4 +92,4 @@ GPIO 片选可由应用另选；未匹配硬件组、时钟不可确认或无法
 
 编辑源数据 [devices.json](../tools/variants/devices.json) 与 [peripherals.json](../tools/variants/peripherals.json)，运行 `node tools/variants/generate.mjs`。生成器校验数量、默认复用组和封装引脚；`--check` 检查生成文件是否同步。
 
-[MultipleSerial](../examples/Practical/MultipleSerial/MultipleSerial.ino) 与 [DualBus](../libraries/Wire/examples/DualBus/DualBus.ino) 用于目标编译。`node tests/peripherals/run.mjs --clang <clang> --ld <wasm-ld>` 用实际 C 驱动配合模拟寄存器检查串口接收隔离、溢出、发送、定时器占用、引脚复用，以及双 IIC 的独立状态、重复 START、NACK、超时、从机回调和关闭。编译与模拟不替代实板的中断时序、波特率和总线电气验证。
+[MultipleSerial](../examples/Practical/MultipleSerial/MultipleSerial.ino) 与 [DualBus](../libraries/Wire/examples/DualBus/DualBus.ino) 可用于目标编译。实际中断时序、波特率和总线电气行为仍需实板验证。

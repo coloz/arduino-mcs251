@@ -3,6 +3,11 @@
 #include "wiring_digital_private.h"
 #include "wiring_pwm_private.h"
 
+/* Internal use only, after checking the encoded bit or validating the pin.
+ * The public digitalPinToBitMask macro also accepts invalid encodings; using
+ * it here made SDCC repeat those checks in every GPIO call. */
+#define STC_VALID_PIN_MASK(pin) ((uint8_t)(1u << ((pin) & 7u)))
+
 static uint8_t stc_critical_enter(void)
 {
     uint8_t enabled = (uint8_t)(IE & STC_IE_EA);
@@ -25,7 +30,7 @@ uint8_t digitalPinIsValid(uint8_t pin)
     if ((pin & 0x0fu) > 7u) {
         return 0u;
     }
-    mask = digitalPinToBitMask(pin);
+    mask = STC_VALID_PIN_MASK(pin);
 
     switch (port) {
     case 0u:
@@ -417,7 +422,7 @@ static void stc_release_physical_alias(uint8_t pin)
         return;
     }
     port = (uint8_t)(alias >> 4);
-    mask = digitalPinToBitMask(alias);
+    mask = STC_VALID_PIN_MASK(alias);
 
 #if STC_CORE_ADC_USES_P1ASF
     if (port == 1u) {
@@ -450,9 +455,11 @@ void digitalWrite(uint8_t pin, uint8_t value) STC_REENTRANT
         return;
     }
 
-    stc_pwm_detach(pin);
+#if STC_CORE_PWM_LAYOUT
+    if (stc_pwm_active) stc_pwm_detach(pin);
+#endif
     port = (uint8_t)(pin >> 4);
-    mask = digitalPinToBitMask(pin);
+    mask = STC_VALID_PIN_MASK(pin);
     if (stc_pin_is_input(port, mask) != 0u) {
 #if STC_CORE_HAS_PORT_MODE
 # if STC_CORE_HAS_SEPARATE_PULLUP
@@ -492,7 +499,7 @@ int digitalRead(uint8_t pin)
     }
 
     port = (uint8_t)(pin >> 4);
-    mask = digitalPinToBitMask(pin);
+    mask = STC_VALID_PIN_MASK(pin);
     return ((stc_port_read(port) & mask) != 0u) ? HIGH : LOW;
 }
 
@@ -510,9 +517,11 @@ void pinMode(uint8_t pin, uint8_t mode) STC_REENTRANT
         return;
     }
 
-    stc_pwm_detach(pin);
+#if STC_CORE_PWM_LAYOUT
+    if (stc_pwm_active) stc_pwm_detach(pin);
+#endif
     port = (uint8_t)(pin >> 4);
-    mask = digitalPinToBitMask(pin);
+    mask = STC_VALID_PIN_MASK(pin);
 
 #if STC_CORE_ADC_USES_P1ASF
     if (port == 1u) {

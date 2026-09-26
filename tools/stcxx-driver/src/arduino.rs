@@ -476,6 +476,12 @@ fn prepare(build: &Path, sketch: &Path) -> Result<()> {
 }
 
 fn mirror(build: &Path, sketch: &Path, main: Option<&Path>) -> Result<()> {
+    ensure!(
+        sketch.is_dir(),
+        "missing sketch directory: {}",
+        sketch.display()
+    );
+    let source_tree = sketch.join("src");
     let target = build.join("sketch");
     let manifest = build.join("stcxx-sketch-inputs.json");
     let previous: BTreeMap<String, String> = if manifest.exists() {
@@ -488,15 +494,18 @@ fn mirror(build: &Path, sketch: &Path, main: Option<&Path>) -> Result<()> {
         .max_depth(1)
         .into_iter()
         .chain(
-            walkdir::WalkDir::new(sketch.join("src"))
+            walkdir::WalkDir::new(&source_tree)
                 .into_iter()
-                .filter(|e| e.as_ref().map_or(true, |e| e.path() != sketch.join("src"))),
+                .filter(|e| e.as_ref().map_or(true, |e| e.path() != source_tree)),
         )
     {
         let entry = match entry {
             Ok(e) => e,
-            Err(e) if !sketch.join("src").exists() => {
-                let _ = e;
+            Err(e)
+                if e.path() == Some(source_tree.as_path())
+                    && e.io_error()
+                        .is_some_and(|e| e.kind() == std::io::ErrorKind::NotFound) =>
+            {
                 continue;
             }
             Err(e) => return Err(e.into()),
@@ -520,7 +529,7 @@ fn mirror(build: &Path, sketch: &Path, main: Option<&Path>) -> Result<()> {
         if output.exists() {
             let old = digest(&fs::read(&output)?);
             ensure!(
-                previous.contains_key(&text(relative)) || old == hash,
+                previous.get(&text(relative)) == Some(&old) || old == hash,
                 "sketch hook output conflicts with {}",
                 output.display()
             );
@@ -655,5 +664,42 @@ mod tests {
         mirror(&build, &src, Some(&src.join("main.cpp"))).unwrap();
         assert!(!build.join("sketch/native.c").exists());
         assert!(build.join("sketch/other.cpp").exists());
+    }
+
+    #[test]
+    fn missing_sketch_does_not_remove_previous_outputs() {
+        let temp = tempfile::tempdir().unwrap();
+        let src = temp.path().join("project");
+        let build = temp.path().join("build");
+        write(&src.join("native.c"), b"native").unwrap();
+        mirror(&build, &src, None).unwrap();
+        let manifest = fs::read(build.join("stcxx-sketch-inputs.json")).unwrap();
+        fs::rename(&src, temp.path().join("moved-project")).unwrap();
+        assert!(mirror(&build, &src, None).is_err());
+        assert_eq!(fs::read(build.join("sketch/native.c")).unwrap(), b"native");
+        assert_eq!(
+            fs::read(build.join("stcxx-sketch-inputs.json")).unwrap(),
+            manifest
+        );
+    }
+
+    #[test]
+    fn sketch_hook_preserves_modified_outputs_on_update() {
+        let temp = tempfile::tempdir().unwrap();
+        let src = temp.path().join("project");
+        let build = temp.path().join("build");
+        write(&src.join("native.c"), b"original").unwrap();
+        mirror(&build, &src, None).unwrap();
+        write(&build.join("sketch/native.c"), b"other hook").unwrap();
+        write(&src.join("native.c"), b"updated").unwrap();
+        assert!(mirror(&build, &src, None).is_err());
+        assert_eq!(
+            fs::read(build.join("sketch/native.c")).unwrap(),
+            b"other hook"
+        );
+        // An unchanged owned copy still follows edits in the source directory.
+        write(&build.join("sketch/native.c"), b"original").unwrap();
+        mirror(&build, &src, None).unwrap();
+        assert_eq!(fs::read(build.join("sketch/native.c")).unwrap(), b"updated");
     }
 }

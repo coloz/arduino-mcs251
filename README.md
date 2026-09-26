@@ -10,13 +10,13 @@ FQBN 统一为 `stc:mcs251:<variants>`，其中 `<variants>` 是 `boards.txt` �
 
 当前版本供开发和有限场景验证使用，尚未完成实板验收。产品板需验证实际时钟、接线和外设功能；编译成功不代表实板验收通过。
 
-当前能力与容量限制见 [兼容性说明](COMPATIBILITY.md)。G144 默认 XRAM 为高地址 64 KiB，128 KiB 配置保留为实验选项。
+当前能力与容量限制见下文 C++ 与 Arduino API 部分及各库 README。G144 默认 XRAM 为高地址 64 KiB，128 KiB 配置保留为实验选项。
 
 Arduino 构建入口为 Rust 原生 **`stcxx.exe` / `stcxx`**，直接调度 Clang、LLVM-CBE、SDCC，并输出内部命令。编译运行时不使用 PowerShell、shell 或 Python，原生安装包不集成 Python。Windows x64 和 Apple Silicon 分别构建并验证各自的原生驱动。详见 [原生驱动说明](tools/stcxx-driver/README.md)。
 
 SDK 通过原生构建适配入口兼容未经修改的 aily-builder 1.2.17：对象文件封装完整编译数据，归档支持标准 rcs 调用，并通过标准配方导出 HEX。Arduino CLI 使用同一入口。升级后请清理旧构建缓存。实现与格式约定见 [aily-builder 适配说明](tools/stcxx-driver/README.md#aily-builder)。Windows x64 和 Apple Silicon macOS 15+ 使用各自的原生构建。
 
-0.0.2 提供 Windows x64 和 Apple Silicon 原生安装包，发布说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。源码构建使用 `node scripts/build-native-driver.mjs`。
+0.0.2 提供 Windows x64 和 Apple Silicon 原生安装包。源码构建使用 `node scripts/build-native-driver.mjs`。
 
 ## 安装
 
@@ -74,7 +74,7 @@ STC32G144K246 的 `工具 → Upload method` 默认为 `Automatic (USB CDC or UA
 
 编译完成后使用 Arduino 标准的 `Sketch uses ...` 和 `Global variables use ...` 两行容量摘要。动态内存占用统计 XDATA/PDATA，包含固定预留的堆；最大容量跟随所选 XRAM 配置。MCS251 的局部变量栈位于独立的 EDATA 区域，因此标准文案中的 `leaving ... bytes for local variables` 在本平台表示尚未分配的外部数据空间，并非实际剩余栈或运行时可用堆。内部 DATA/IDATA、栈和堆预留明细可通过 `stcxx advanced-size <构建目录>/<Sketch>.ino.mem` 查看。
 
-准备 Arduino CLI、Rust、Node.js 及所需编译工具，先运行 `node scripts/build-native-driver.mjs`。原生打包和本机安装方法见 [打包说明](scripts/TOOLCHAIN-PACKAGING.md)。以下是保留的可选 PowerShell 维护入口（另需 tar），Arduino 编译本身不调用它。命令在源码仓库根目录执行；开发板管理器安装包不包含 `scripts` 维护工具：
+准备 Arduino CLI、Rust、Node.js 及所需编译工具，先运行 `node scripts/build-native-driver.mjs`。原生工具用法见 [驱动说明](tools/stcxx-driver/README.md)。以下是保留的可选 PowerShell 维护入口（另需 tar），Arduino 编译本身不调用它。命令在源码仓库根目录执行；开发板管理器安装包不包含 `scripts` 维护工具：
 
 ```powershell
 $build = .\scripts\build-example.ps1 `
@@ -88,19 +88,19 @@ $build.firmware
 
 平台只提供 C++11 模式，所有板项默认启用 C++ 编译链，无需选择语言或附加 `cppcore` 参数。安装脚本不传 FQBN 时默认编译 STC32G8K64、12 MHz 的 C++ Blink。G12K128、G144K246 等完整 Flash 布局依赖发布包中重建的 SDCC 分区功能；旧原版工具包不满足时构建会明确拒绝。详见 [原生驱动说明](tools/stcxx-driver/README.md)。
 
-源码安装脚本用于维护者调试。脚本会下载并校验锁定的统一工具链和上传器归档，也可通过 `-ToolCacheDirectory` 复用本地归档，或通过 `-ToolManifestPath` 指定已验证的工具清单。发布前将本地工具归档目录传给 `-ToolCacheDirectory`。统一工具链打包步骤见 [打包说明](https://github.com/coloz/arduino-mcs251/blob/main/scripts/TOOLCHAIN-PACKAGING.md)。打包不会自动发布。版本变化见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
+源码安装脚本用于维护者调试。脚本会下载并校验锁定的统一工具链和上传器归档，也可通过 `-ToolCacheDirectory` 复用本地归档，或通过 `-ToolManifestPath` 指定已验证的工具清单。发布前将本地工具归档目录传给 `-ToolCacheDirectory`。打包命令见下文维护部分，打包不会自动发布。
 
 ## C++ 与 Arduino API
 
 C++ 使用 Clang → LLVM-CBE → SDCC，提供 `String`、`Print`、`Stream`、`HardwareSerial`、`SPIClass`、`TwoWire` 等接口。所有板项默认使用 12 MHz，时钟菜单仅列出编译链支持的配置；AI8051U-34K64 另有 40 MHz、STC32G144K246 另有 48 MHz。编译时钟必须与芯片实际时钟一致，菜单不会替代 ISP 时钟配置。
 
-支持 GPIO、计时、按型号提供的多路硬件串口、ADC/PWM/外部中断，以及 Wire、SPI、SoftwareSerial、LiquidCrystal、Stepper 和受限的 SD。串口提供 `Serial1`～`Serial4`，STC32G144K246 扩展到 `Serial8`；STC32CL 当前封装未引出 UART2，因此没有 `Serial2`。G144 另有独立第二路 IIC `Wire1` 和三路 SPI 对象 `SPI`、`SPI1`、`SPI2`。接口以 [Arduino.h](cores/STC/Arduino.h) 和各库头文件为准，数量与引脚见 [变体说明](variants/README.md)，尚未适配的硬件功能见 [接口检查](variants/HARDWARE_INTERFACES.md)，使用示例位于 `libraries/<库名>/examples`。总线和 GPIO 共用引脚，使用前核对型号和封装。
+支持 GPIO、计时、按型号提供的多路硬件串口、ADC/PWM/外部中断，以及 Wire、SPI、SoftwareSerial、LiquidCrystal、Stepper 和受限的 SD。串口提供 `Serial1`～`Serial4`，STC32G144K246 扩展到 `Serial8`；STC32CL 当前封装未引出 UART2，因此没有 `Serial2`。G144 另有独立第二路 IIC `Wire1` 和三路 SPI 对象 `SPI`、`SPI1`、`SPI2`。接口以 [Arduino.h](cores/STC/Arduino.h) 和各库头文件为准，数量、引脚和未适配功能见 [变体说明](variants/README.md)，使用示例位于 `libraries/<库名>/examples`。总线和 GPIO 共用引脚，使用前核对型号和封装。
 
 平台提供 [USB HID](libraries/HID/README.md)、[Keyboard](libraries/Keyboard/README.md)、[Mouse](libraries/Mouse/README.md) 和 [CAN](libraries/CAN/README.md) 通信库，随 core 平台包一同安装。键鼠 API 移植自 Arduino 官方库；CAN 提供 `HardwareCAN` / `CanMsg` 风格接口和独立的分包适配器。HID 按型号支持 G12、G144、AI8051U，CAN 支持 G12、G8、CL、G144；AI8051U-34K16 当前只能容纳较小的自定义 HID 示例，键鼠示例超出 Flash。各库说明包含支持型号、接线和示例索引。
 
 ABI 使用 16 位 `int`、32 位 `long`/`size_t`/`ptrdiff_t`、24 位指针，大端布局，`double` 与 `float` 均为 32 位。异常、RTTI、线程和完整 STL 不在支持范围内。不要直接发送结构体内存作为外部协议；可使用 `STCByteOrder.h`。运行时配置见 [runtime-manifest.json](cores/STC/runtime/runtime-manifest.json)。
 
-平台不包含实验性 Adafruit NeoPixel 库。
+UART 目前仅支持 `SERIAL_8N1`；`F()` / `PROGMEM` 不节省 RAM；没有网络协议栈或完整 AVR `PluggableUSB`。16 KiB 型号需要按实际功能组合检查 Flash 占用。平台不包含实验性 Adafruit NeoPixel 库。
 
 ## 烧录
 
@@ -123,8 +123,11 @@ $stc = '..\stc-cli\target\release\stc-cli.exe'
 
 ## 维护
 
+维护入口包括板型生成校验、SDK 同步检查、原生驱动构建及平台打包：
+
 ```powershell
 node .\tools\variants\generate.mjs --check
+node .\scripts\sync-stcxx-sdk.mjs --check
 node .\tools\variants\generate.mjs
 node .\scripts\build-native-driver.mjs
 .\tools\stcxx-driver\stcxx.exe package-platform . dist/arduino-mcs251-native.zip
