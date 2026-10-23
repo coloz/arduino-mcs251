@@ -664,7 +664,7 @@
       ],
       "max_io": 45,
       "package_dependent": true,
-      "data_quality_note": "The STC32G manual section 22.1.1 maps G8K48/G8K64 ADC channel 2 to P5.4; P1.2 remains a digital GPIO. Program Flash in MCS251 Source mode is 0xFF0000-0xFFBFFF; reset remains at 0xFF0000. Program size must not include the remaining EEPROM region. The experimental C++11 core profile is exposed at 12 MHz; exact-QEMU qualification is tracked separately. Clock options are conservatively limited to 12 and 24 MHz and must match ISP settings.",
+      "data_quality_note": "The STC32G manual section 22.1.1 maps G8K48/G8K64 ADC channel 2 to P5.4; P1.2 remains a digital GPIO. Program Flash in MCS251 Source mode is 0xFF0000-0xFFBFFF; reset remains at 0xFF0000. Program size must not include the remaining EEPROM region. The experimental C++11 core profile is exposed at 12 MHz; exact-QEMU qualification is tracked separately. The current SDK exposes only 12 MHz; the ISP user-program clock must match this setting. This software profile restriction does not describe the silicon frequency range.",
       "official_url": "https://www.stcmicro.com/cn/stc/stc32g8k64.html",
       "upload_requires_manual_model_check": false
     },
@@ -761,7 +761,7 @@
         ]
       ],
       "package_dependent": true,
-      "data_quality_note": "Program Flash in MCS251 Source mode is 0xFF0000-0xFFBFFF; reset remains at 0xFF0000. Program size must not include the remaining EEPROM region. The experimental C++11 core profile is exposed at 12 MHz; exact-QEMU qualification is tracked separately. Clock options are conservatively limited to 12 and 24 MHz and must match ISP settings. The 19 logical port names represent 17 physical pads; P1.4/P0.2 and P1.5/P0.3 remain physical aliases. STC32G manual dated 2026-09-08, sections 4.3, 11, 13, 23, 25 and 26: enable classic SPI, 6-bit hardware I2C, advanced PWM, separate pull-up controls and WTST/CKCON startup. Default SPI SS uses bonded P1.2; P1.0 and P5.2 are absent on TSSOP20.",
+      "data_quality_note": "Program Flash in MCS251 Source mode is 0xFF0000-0xFFBFFF; reset remains at 0xFF0000. Program size must not include the remaining EEPROM region. The experimental C++11 core profile is exposed at 12 MHz; exact-QEMU qualification is tracked separately. The current SDK exposes only 12 MHz; the ISP user-program clock must match this setting. This software profile restriction does not describe the silicon frequency range. The 19 logical port names represent 17 physical pads; P1.4/P0.2 and P1.5/P0.3 remain physical aliases. STC32G manual dated 2026-09-08, sections 4.3, 11, 13, 23, 25 and 26: enable classic SPI, 6-bit hardware I2C, advanced PWM, separate pull-up controls and WTST/CKCON startup. Default SPI SS uses bonded P1.2; P1.0 and P5.2 are absent on TSSOP20.",
       "official_url": "https://www.stcmicro.com/cn/stc/stc32cl8k64.html",
       "upload_requires_manual_model_check": true
     },
@@ -858,7 +858,7 @@
         ]
       ],
       "package_dependent": true,
-      "data_quality_note": "Program Flash in MCS251 Source mode is 0xFF0000-0xFF7FFF; reset remains at 0xFF0000. Program size must not include the remaining EEPROM region. Only MCS251 is supported. The experimental C++11 core profile is exposed at 12 MHz; exact-QEMU qualification is tracked separately. Clock options are conservatively limited to 12 and 24 MHz and must match ISP settings. The 46 logical port names represent 45 physical pads; P4.4/P4.5 remain aliases. DATA/IDATA is a compatibility view of EDATA in MCS251 mode.",
+      "data_quality_note": "Program Flash in MCS251 Source mode is 0xFF0000-0xFF7FFF; reset remains at 0xFF0000. Program size must not include the remaining EEPROM region. Only MCS251 is supported. The experimental C++11 core profile is exposed at 12 MHz; exact-QEMU qualification is tracked separately. The current SDK exposes only 12 MHz; the ISP user-program clock must match this setting. This software profile restriction does not describe the silicon frequency range. The 46 logical port names represent 45 physical pads; P4.4/P4.5 remain aliases. DATA/IDATA is a compatibility view of EDATA in MCS251 mode.",
       "official_url": "https://www.stcmicro.com/datasheet/Ai8051U_Features.pdf",
       "upload_requires_manual_model_check": true
     },
@@ -956,7 +956,7 @@
         ]
       ],
       "package_dependent": true,
-      "data_quality_note": "Program Flash in MCS251 Source mode is 0xFF0000-0xFF3FFF; reset remains at 0xFF0000. Program size must not include the remaining EEPROM region. Only MCS251 is supported. The experimental C++11 core profile is exposed at 12 MHz using the compact workload contract; exact-QEMU qualification is tracked separately. Clock options are conservatively limited to 12 and 24 MHz and must match ISP settings. The 46 logical port names represent 45 physical pads; P4.4/P4.5 remain aliases. DATA/IDATA is a compatibility view of EDATA in MCS251 mode.",
+      "data_quality_note": "Program Flash in MCS251 Source mode is 0xFF0000-0xFF3FFF; reset remains at 0xFF0000. Program size must not include the remaining EEPROM region. Only MCS251 is supported. The experimental C++11 core profile is exposed at 12 MHz using the compact workload contract; exact-QEMU qualification is tracked separately. The current SDK exposes only 12 MHz; the ISP user-program clock must match this setting. This software profile restriction does not describe the silicon frequency range. The 46 logical port names represent 45 physical pads; P4.4/P4.5 remain aliases. DATA/IDATA is a compatibility view of EDATA in MCS251 mode.",
       "official_url": "https://www.stcmicro.com/datasheet/Ai8051U_Features.pdf",
       "upload_requires_manual_model_check": true
     }

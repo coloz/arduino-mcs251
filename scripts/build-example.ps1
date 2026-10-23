@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$ArduinoCli = 'arduino-cli',
-    [string]$Fqbn = 'stc:mcs251:stc32g8k64:clock=12m',
+    [string]$Fqbn = 'stc:mcs251:stc32g8k64',
     [string]$SketchPath,
     [string]$WorkDirectory,
     [string]$ToolCacheDirectory,

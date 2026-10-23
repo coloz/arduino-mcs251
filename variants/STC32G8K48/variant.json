@@ -280,5 +280,5 @@
   },
   "official_product_page": "https://www.stcmicro.com/cn/stc/stc32g8k64.html",
   "caveat": "Verify the concrete package pinout; unavailable pins are rejected by the core masks.",
-  "data_quality_note": "The STC32G manual section 22.1.1 maps G8K48/G8K64 ADC channel 2 to P5.4; P1.2 remains a digital GPIO. Program Flash in MCS251 Source mode is 0xFF0000-0xFFBFFF; reset remains at 0xFF0000. Program size must not include the remaining EEPROM region. The experimental C++11 core profile is exposed at 12 MHz; exact-QEMU qualification is tracked separately. Clock options are conservatively limited to 12 and 24 MHz and must match ISP settings."
+  "data_quality_note": "The STC32G manual section 22.1.1 maps G8K48/G8K64 ADC channel 2 to P5.4; P1.2 remains a digital GPIO. Program Flash in MCS251 Source mode is 0xFF0000-0xFFBFFF; reset remains at 0xFF0000. Program size must not include the remaining EEPROM region. The experimental C++11 core profile is exposed at 12 MHz; exact-QEMU qualification is tracked separately. The current SDK exposes only 12 MHz; the ISP user-program clock must match this setting. This software profile restriction does not describe the silicon frequency range."
 }

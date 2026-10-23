@@ -78,7 +78,7 @@ STC32G144K246 的 `工具 → Upload method` 默认为 `Automatic (USB CDC or UA
 
 ```powershell
 $build = .\scripts\build-example.ps1 `
-    -Fqbn 'stc:mcs251:stc32g12k128:clock=12m' `
+    -Fqbn 'stc:mcs251:stc32g12k128' `
     -WorkDirectory D:\stc51-work `
     -ToolCacheDirectory D:\stc51-tools
 $build.firmware
@@ -101,6 +101,18 @@ C++ 使用 Clang → LLVM-CBE → SDCC，提供 `String`、`Print`、`Stream`、
 ABI 使用 16 位 `int`、32 位 `long`/`size_t`/`ptrdiff_t`、24 位指针，大端布局，`double` 与 `float` 均为 32 位。异常、RTTI、线程和完整 STL 不在支持范围内。不要直接发送结构体内存作为外部协议；可使用 `STCByteOrder.h`。运行时配置见 [runtime-manifest.json](cores/STC/runtime/runtime-manifest.json)。
 
 UART 目前仅支持 `SERIAL_8N1`；`F()` / `PROGMEM` 不节省 RAM；没有网络协议栈或完整 AVR `PluggableUSB`。16 KiB 型号需要按实际功能组合检查 Flash 占用。平台不包含实验性 Adafruit NeoPixel 库。
+
+## 时钟配置
+
+SDK 默认按 12 MHz 编译。AI8051U-34K64 可通过 `clock` 菜单选择 `12m` / `40m`，STC32G144K246 可选择 `12m` / `48m`；其余型号固定按 12 MHz 编译。已有单频型号工程若保存了 `clock` 配置，请移除该键后重新编译。
+
+这一区别来自软件支持范围，不能视为芯片硬件频率限制或统一出厂默认值：
+
+- [STC32G8K64 系列](https://stcmicro.com/cn/stc/stc32g8k64.html)、[STC32G12K128 系列](https://stcmicro.com/cn/stc/stc32g12k128.html)、[STC32CL8K64 系列](https://stcmicro.com/cn/stc/stc32cl8k64.html)官方产品资料列出的时钟范围均包含 24 MHz，并支持 ISP 调节内部 IRC。
+- [STC32G144K246 官方手册](https://www.stcmicro.com/datasheet/STC32G144K246-cn.pdf#page=293)第 11.4.1 节（PDF 第 292～293 页）提供选择 24 MHz 的代码；第 8.2 节（PDF 第 248 页）区分 ISP 固定 24 MHz 与用户程序采用的上次 ISP 调节频率。
+- [AI8051U 官方手册](https://www.stcmicro.com/datasheet/AI8051U-cn.pdf#page=582)第 8.2 节（PDF 第 582 页）同样说明 ISP 程序使用固定 24 MHz，进入用户程序后使用上次 ISP 下载时调节的频率。
+
+编译参数 `F_CPU` 必须与用户程序实际时钟一致。核心与现有上传命令不会自动切换该时钟；使用默认模板时，应在官方 ISP 中核对 12 MHz 和 MCS251 执行模式。需要 24 MHz 等其他配置时，应同步扩展 `devices.json`、生成器的时钟配置约束并重新生成，验证计时、串口和相关外设；仅修改工程的 `clock` 字符串无效。
 
 ## 烧录
 

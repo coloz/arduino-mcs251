@@ -813,13 +813,15 @@ function renderBoards(devices) {
     }
     lines.push("");
 
-    for (const hz of device.clock_options_hz) {
-      const suffix = hz === device.default_clock_hz ? " (default)" : "";
-      const option = clockId(hz);
-      lines.push(
-        `${board}.menu.clock.${option}=${clockLabel(hz)}${suffix}`,
-        `${board}.menu.clock.${option}.build.f_cpu=${hz}L`,
-      );
+    if (device.clock_options_hz.length > 1) {
+      for (const hz of device.clock_options_hz) {
+        const suffix = hz === device.default_clock_hz ? " (default)" : "";
+        const option = clockId(hz);
+        lines.push(
+          `${board}.menu.clock.${option}=${clockLabel(hz)}${suffix}`,
+          `${board}.menu.clock.${option}.build.f_cpu=${hz}L`,
+        );
+      }
     }
     lines.push("", "");
   }
