@@ -169,6 +169,8 @@ node .\scripts\build-native-driver.mjs
 .\tools\stcxx-driver\stcxx.exe package-platform . dist/arduino-mcs251-native.zip
 ```
 
+GitHub Actions 的 `Build and qualify native release assets` 工作流可手动运行，分别在 Windows x64 与 Apple Silicon 上构建原生驱动、运行 Rust 与 EEPROM 链接测试，并隔离编译 Arduino 示例。两端通过后合并安装包、校验不可变依赖并生成 `release-assets`；该工作流只生成待发布资产，发布时还需将生成的索引同步到仓库。共享驱动与 SDK 的源码提交固定在工作流中。
+
 生成器仅接受 MCS251 型号，并拒绝遗留的孤立 variant 目录。平台和库架构声明统一为 `mcs251`。修改 [devices.json](tools/variants/devices.json) 后重新生成配置。工具链二进制与 ABI 由 `tools/stcxx-driver` 中的宿主锁文件校验；上传配方及安装验证脚本保留在 `scripts`。
 
 `scripts` 保留 core 与原生驱动构建、现有工具链打包、索引生成、代码生成和发布校验入口。用户安装包保留 core、variants、库、示例、编译驱动、锁文件及许可说明；维护脚本和生成器只放在源码仓库。SDK 使用预编译工具链，编译器源码补丁及重建脚本已移除，编译器本身由独立的 `stcxx` 项目维护。工具目录用途见 [tools/README.md](tools/README.md)。上游 `sdk` 资料清单已移除；源码构建的工具下载缓存默认位于 `dist/toolchain-cache`。

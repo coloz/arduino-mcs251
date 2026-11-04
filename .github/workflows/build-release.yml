@@ -1,0 +1,132 @@
+name: Build and qualify native release assets
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    name: Native driver (${{ matrix.host }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            host: windows-x86_64
+          - runner: macos-15
+            host: macos-arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: arduino-mcs251
+    steps:
+      - name: Preserve source bytes across hosts
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+        with:
+          path: arduino-mcs251
+      - uses: actions/checkout@v4
+        with:
+          repository: coloz/stcxx
+          ref: 8dd3bc6eb5e07e3ff40d90e0d473097f6acedc33
+          path: stcxx
+          sparse-checkout: |
+            compiler
+            sdk
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: arduino/setup-arduino-cli@v2
+        with:
+          version: '1.3.1'
+      - name: Select native stable Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          rustup default stable
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          rustc -vV
+      - name: Verify generated configuration
+        run: |
+          node tools/variants/generate.mjs --check
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node --test tools/variants/eeprom.test.mjs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Build host driver and notices
+        run: |
+          node scripts/build-native-driver.mjs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node scripts/sync-stcxx-sdk.mjs --check
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Test Arduino adapter
+        run: cargo test --manifest-path tools/stcxx-driver/Cargo.toml --locked
+      - name: Test shared compiler
+        run: cargo test --manifest-path ../stcxx/compiler/Cargo.toml --locked
+      - name: Qualify native link boundaries and isolated Arduino builds
+        run: >-
+          python scripts/prepare-release.py validate-host
+          --host '${{ matrix.host }}'
+          --work '${{ runner.temp }}/mcs251-ci'
+          --output 'dist/native-driver-${{ matrix.host }}'
+      - name: Upload qualified driver and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-driver-${{ matrix.host }}
+          path: arduino-mcs251/dist/native-driver-${{ matrix.host }}/
+          if-no-files-found: error
+          retention-days: 14
+
+  package:
+    name: Assemble and verify combined platform
+    needs: native
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: arduino-mcs251
+    steps:
+      - name: Preserve source bytes across hosts
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+        with:
+          path: arduino-mcs251
+      - uses: actions/checkout@v4
+        with:
+          repository: coloz/stcxx
+          ref: 8dd3bc6eb5e07e3ff40d90e0d473097f6acedc33
+          path: stcxx
+          sparse-checkout: |
+            compiler
+            sdk
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-driver-*
+          path: arduino-mcs251/dist/drivers
+      - name: Build immutable platform archive and Arduino index
+        run: python scripts/prepare-release.py assemble --drivers dist/drivers --output dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: |
+            arduino-mcs251/dist/arduino-mcs251-*.zip
+            arduino-mcs251/dist/arduino-mcs251-*.zip.json
+            arduino-mcs251/dist/package_mcs251_index.json
+            arduino-mcs251/dist/release-validation.json
+            arduino-mcs251/dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 30
