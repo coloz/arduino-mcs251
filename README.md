@@ -2,7 +2,7 @@
 
 编译驱动由配套 [stcxx/compiler](../stcxx/compiler/) 统一维护，基础运行库与宿主锁来自 [stcxx/sdk](../stcxx/sdk/)。重建驱动时需将两个仓库并列放置；已安装的开发板包无需源码仓库。独立于 Arduino 的 C/C++ 编译见 [STCXX SDK 使用说明](../stcxx/sdk/README.md)。
 
-面向 STC **MCS251** 芯片的 Arduino core。当前版本 **0.0.2**，支持 Windows x64 和 Apple Silicon macOS 15+，仅维护 10 个型号；所有型号固定使用 `-mmcs251`，Arduino 架构标识为 `mcs251`。
+面向 STC **MCS251** 芯片的 Arduino core。当前版本 **0.0.3**，支持 Windows x64 和 Apple Silicon macOS 15+，仅维护 10 个型号；所有型号固定使用 `-mmcs251`，Arduino 架构标识为 `mcs251`。
 
 MCS51 芯片、板项和 C++ 适配路径已移除。旧的 MCS51 FQBN 不再适用，需要重新安装当前源码并选择新板项。工程目录为 `arduino-mcs251`。
 
@@ -16,7 +16,7 @@ Arduino 构建入口为 Rust 原生 **`stcxx.exe` / `stcxx`**，直接调度 Cla
 
 SDK 通过原生构建适配入口兼容未经修改的 aily-builder 1.2.17：对象文件封装完整编译数据，归档支持标准 rcs 调用，并通过标准配方导出 HEX。Arduino CLI 使用同一入口。升级后请清理旧构建缓存。实现与格式约定见 [aily-builder 适配说明](tools/stcxx-driver/README.md#aily-builder)。Windows x64 和 Apple Silicon macOS 15+ 使用各自的原生构建。
 
-0.0.2 提供 Windows x64 和 Apple Silicon 原生安装包。源码构建使用 `node scripts/build-native-driver.mjs`。
+0.0.3 提供 Windows x64 和 Apple Silicon 原生安装包。源码构建使用 `node scripts/build-native-driver.mjs`。
 
 ## 安装
 
@@ -26,18 +26,18 @@ SDK 通过原生构建适配入口兼容未经修改的 aily-builder 1.2.17：�
 https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
 ```
 
-在开发板管理器中安装 **mcs251 0.0.2**，然后选择对应型号。Arduino CLI 可使用：
+在开发板管理器中安装 **mcs251 0.0.3**，然后选择对应型号。Arduino CLI 可使用：
 
 ```powershell
 arduino-cli core update-index --additional-urls https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
-arduino-cli core install stc:mcs251@0.0.2 --additional-urls https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
+arduino-cli core install stc:mcs251@0.0.3 --additional-urls https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
 ```
 
-安装资源见 [v0.0.2 Release](https://github.com/coloz/arduino-mcs251/releases/tag/v0.0.2)。使用上述索引安装 `stc:mcs251@0.0.2`，并选择对应板卡。如果已有安装，请先卸载后重新安装，清理构建缓存并重新编译。
+安装资源见 [v0.0.3 Release](https://github.com/coloz/arduino-mcs251/releases/tag/v0.0.3)。使用上述索引安装 `stc:mcs251@0.0.3`，并选择对应板卡。如果已有安装，请先卸载后重新安装，清理构建缓存并重新编译。
 
 从旧包迁移时，需安装 `stc:mcs251` 并重新选择板卡，将项目和脚本中的旧 FQBN 前缀改为 `stc:mcs251:`；旧包的版本升级不会自动完成迁移。确认新包可用后，可卸载旧包。手动安装源码时，平台目录应为 `<sketchbook>/hardware/stc/mcs251`；开发板管理器安装路径为 `packages/stc/hardware/mcs251/<version>`。
 
-0.0.2 开发板管理器包安装 `stcxx-toolchain` `0.3.0` 和 `stc-cli` `0.1.0-stc.2` 两项工具。原生打包器只保留 Clang、LLVM-CBE、SDCC 及其原生辅助程序、头文件、运行库和许可证，不携带解释器。C++ 编译流程仍为 Clang → LLVM-CBE → SDCC，`stc-cli` 继续负责 UART 和原生 USB 上传，并支持新 CDC 的 1200 bps 复位。
+0.0.3 开发板管理器包安装 `stcxx-toolchain` `0.3.0` 和 `stc-cli` `0.1.0-stc.2` 两项工具。原生打包器只保留 Clang、LLVM-CBE、SDCC 及其原生辅助程序、头文件、运行库和许可证，不携带解释器。C++ 编译流程仍为 Clang → LLVM-CBE → SDCC，`stc-cli` 继续负责 UART 和原生 USB 上传，并支持新 CDC 的 1200 bps 复位。
 
 ## 支持型号
 
@@ -57,6 +57,30 @@ arduino-cli core install stc:mcs251@0.0.2 --additional-urls https://raw.githubus
 型号、存储布局和引脚掩码以 [devices.json](tools/variants/devices.json) 为准。物理 Flash 与当前已验证的可执行窗口不一定相同。具体封装也可能引出更少的 GPIO。
 
 STC32CL8K48／64 提供硬件 Wire、SPI、PWM 和访问加速，默认 Wire 接线为 SDA=P3.3、SCL=P3.2。各型号外设能力和引脚配置见对应的 `variants/<型号>/pins_arduino.h`。
+
+## EEPROM / IAP 分区
+
+使用片内 EEPROM 前，应在 **工具 → User EEPROM size / ROM start** 选择预留容量。共享 Flash 的型号默认 `Disabled`，可选 1、2、4、8、16、32 KiB；选择后会同时调整链接窗口、启动代码和程序容量上限。复位与中断向量始终保留在 `FF:0000`。
+
+| 型号 | EEPROM 的物理 Flash 区域 | 构建行为 |
+| --- | --- | --- |
+| STC32G12K128 | 固定从 `FE:0000` 开始 | 从前部预留；如 2 KiB 时启动代码从 `FE:0800` 开始，程序上限为 129024 字节 |
+| STC32G144K246 | 固定从 `FC:2800` 开始 | 从前部预留；如 2 KiB 时启动代码从 `FC:3000` 开始 |
+| STC32G8K64、STC32CL8K64、AI8051U-34K64 | 从 `FF:FFFF` 向前分配 | 从尾部预留；如 2 KiB 时 EEPROM 为 `FF:F800–FF:FFFF`，程序上限为 63488 字节 |
+| STC32G12K64 | `FE:0000–FE:FFFF`，64 KiB | 已与程序区分开，无需选择预留菜单 |
+| STC32G8K48、STC32CL8K48 | `FF:C000–FF:FFFF`，16 KiB | 已与程序区分开，无需选择预留菜单 |
+| AI8051U-34K32 | `FF:8000–FF:FFFF`，32 KiB | 已与程序区分开，无需选择预留菜单 |
+| AI8051U-34K16 | `FF:4000–FF:FFFF`，48 KiB | 已与程序区分开，无需选择预留菜单 |
+
+例如 Arduino CLI 使用 `stc:mcs251:stc32g12k128:eeprom=k2` 预留 2 KiB。容量变化后应清理构建缓存并重新编译。菜单只配置链接分区，不改变芯片的 ISP 硬件选项；若使用官方 ISP 设置 EEPROM/ROM 分区，应与此容量保持一致。Aily 板卡包的 `menu.json` 还需声明 `key: "eeprom"` 才能显示此菜单，更新 SDK 和板卡包后重新加载板卡数据。
+
+原生 C、C++ 和库发现阶段均提供 `STC_EEPROM_SIZE`（字节）、`STC_EEPROM_FLASH_START`（物理 Flash 地址）、`STC_EEPROM_SECTOR_SIZE`（512 字节）宏。共享 Flash 型号未预留时 `STC_EEPROM_SIZE` 为 0。物理 Flash 地址与 IAP 地址寄存器中的偏移不同：按手册使用 IAP 接口时，EEPROM 的首地址为 0；不要将 `STC_EEPROM_FLASH_START` 直接写入 IAP 地址寄存器。库的访问范围及整扇区擦除范围必须限制在预留容量内。平台目前只提供分区配置，EEPROM/IAP 读写仍由应用或外部库实现。
+
+此配置防止预留区内的运行期 IAP 擦写破坏固件，数据可以断电保存。当前上传器可能整片擦除并用 `FF` 填充 HEX 空洞，**重新烧录固件时不保证保留 EEPROM 数据**。分区修改和硬件擦写行为仍需实板验收。
+
+地址与擦除粒度依据 [STC32G 手册](https://www.stcmicro.com/datasheet/stc32g-cn.pdf) §21.3、[STC32G144K246 手册](https://www.stcmicro.com/datasheet/STC32G144K246-cn.pdf) EEPROM 章节，以及 [AI8051U 手册](https://www.stcmicro.com/datasheet/AI8051U-cn.pdf) §22.4.1 的 EEPROM 地址表。STC32CL 使用其共用 STC32G 手册中的 G8 分配规则，尚无独立实板验证。
+
+维护验证：`node --test tools/variants/eeprom.test.mjs` 检查分区约束；`node scripts/check-eeprom-layout.mjs --sdcc <sdcc路径>` 使用真实链接器检查全部型号与菜单选项的 HEX 地址，并验证侵入 EEPROM 的固定代码被拒绝。
 
 ## 上传
 

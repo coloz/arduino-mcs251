@@ -80,7 +80,7 @@ SPI 硬件编号从 1 开始，Arduino 对象从 `SPI` 开始：G144 的 `SPI1` 
 
 GPIO 片选可由应用另选；未匹配硬件组、时钟不可确认或无法分频时使用软件 SPI。G144 硬件需有效的既有 HSIO/PLL 配置，本库不更改共享 PLL。用 `usingHardware()` 查询当前方式。更多用法和限制见 [SPI 文档](../libraries/SPI/README.md) 与 [HardwareBuses 示例](../libraries/SPI/examples/HardwareBuses/HardwareBuses.ino)。
 
-其他片上功能并未全部提供 Arduino 库，包括 EEPROM/IAP、RTC、G144 完整 CAN-FD、ADC2 和额外 PWM 等。
+其他片上功能并未全部提供 Arduino 库，包括 EEPROM/IAP、RTC、G144 完整 CAN-FD、ADC2 和额外 PWM 等。EEPROM 已提供板卡链接分区和容量宏，地址规则、菜单选项及使用限制见 [EEPROM / IAP 分区](../README.md#eeprom--iap-分区)；读写仍由应用或外部库实现。
 
 ## 配置来源与验证
 

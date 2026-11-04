@@ -16,6 +16,19 @@
     "idata_bytes": 0,
     "xdata_bytes": 131072,
     "edata_bytes": 16384,
+    "eeprom_layout": {
+      "allocation": "prefix",
+      "sector_bytes": 512,
+      "reserve_options_bytes": [
+        0,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384,
+        32768
+      ]
+    },
     "usb_ram_bytes": 5760,
     "executable_ram_bytes": 4096,
     "flash_origin": "0xfc2800",

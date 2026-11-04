@@ -7,6 +7,7 @@ menu.uploadcheck=Upload model check
 menu.uploadtransport=Upload method
 menu.cdc=USB CDC On Boot
 menu.xram=XRAM layout
+menu.eeprom=User EEPROM size / ROM start
 
 #################### STC32G12K128 ####################
 stc32g12k128.name=STC32G12K128 (experimental MCS251)
@@ -23,6 +24,7 @@ stc32g12k128.build.target=-mmcs251
 stc32g12k128.build.mode_flags=-DSTC_EXECUTION_MODE_MCS251
 stc32g12k128.build.core_flags=-DSTC_CORE_FAMILY_32=1 -DSTC_CORE_HAS_PORT0=1 -DSTC_CORE_HAS_PORT1=1 -DSTC_CORE_HAS_PORT2=1 -DSTC_CORE_HAS_PORT3=1 -DSTC_CORE_HAS_PORT4=1 -DSTC_CORE_HAS_PORT5=1 -DSTC_CORE_HAS_PORT6=1 -DSTC_CORE_HAS_PORT7=1 -DSTC_CORE_HAS_PORT8=0 -DSTC_CORE_HAS_PORT9=0 -DSTC_CORE_HAS_PORTA=0 -DSTC_CORE_HAS_PORTB=0 -DSTC_CORE_HAS_PORT_MODE=1 -DSTC_CORE_PWM_LAYOUT=1 -DSTC_CORE_MEMORY_TIMING_LAYOUT=1 -DSTC_CORE_BUS_LAYOUT=1 -DSTC_CORE_USB_LAYOUT=1 -DSTC_CORE_CAN_LAYOUT=1 -DSTC_CORE_WIRE_LAYOUT=1 -DSTC_CORE_HAS_SEPARATE_PULLUP=0 -DSTC_CORE_TIMER1_IS_1T=1 -DSTC_CORE_HAS_UART1=1 -DSTC_CORE_UART_COUNT=4 -DSTC_CORE_I2C_COUNT=1 -DSTC_CORE_UART_AVAILABLE_MASK=15 -DSTC_CORE_SPI_COUNT=1 -DSTC_CORE_SPI_LAYOUT=1 -DSTC_CORE_SERIAL_BUFFERED_RX=1 -DSTC_CORE_HAS_ADC=1 -DSTC_CORE_ADC_LAYOUT=4 -DSTC_CORE_ADC_NATIVE_BITS=12
 stc32g12k128.build.timer_flags=
+stc32g12k128.build.eeprom_flags=-DSTC_EEPROM_SIZE=0UL -DSTC_EEPROM_FLASH_START=0xfe0000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
 stc32g12k128.build.flash_flags=--function-sections --data-sections
 stc32g12k128.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfe0000" -Wl--code-window=0xfe0000:0x1000000
 stc32g12k128.build.cpp_target_link_flags=-DSTCXX_MCS251_IRAM_SIZE=0x1000 -DSTCXX_MCS251_STACK_LOC=0x100 -DSTCXX_MCS251_STACK_SIZE=0xf00
@@ -40,6 +42,42 @@ stc32g12k128.upload.maximum_data_size=8192
 stc32g12k128.upload.maximum_idata_size=0
 stc32g12k128.upload.maximum_xdata_size=8192
 stc32g12k128.upload.maximum_edata_size=4096
+
+stc32g12k128.menu.eeprom.none=Disabled (all Flash for program, default)
+stc32g12k128.menu.eeprom.none.build.eeprom_flags=-DSTC_EEPROM_SIZE=0UL -DSTC_EEPROM_FLASH_START=0xfe0000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g12k128.menu.eeprom.none.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfe0000" -Wl--code-window=0xfe0000:0x1000000
+stc32g12k128.menu.eeprom.none.build.flash_flags=--function-sections --data-sections
+stc32g12k128.menu.eeprom.none.upload.maximum_size=131072
+stc32g12k128.menu.eeprom.k1=1 KiB EEPROM / ROM 0xfe0400-0xffffff
+stc32g12k128.menu.eeprom.k1.build.eeprom_flags=-DSTC_EEPROM_SIZE=1024UL -DSTC_EEPROM_FLASH_START=0xfe0000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g12k128.menu.eeprom.k1.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfe0400" -Wl--code-window=0xfe0400:0x1000000
+stc32g12k128.menu.eeprom.k1.build.flash_flags=--function-sections --data-sections
+stc32g12k128.menu.eeprom.k1.upload.maximum_size=130048
+stc32g12k128.menu.eeprom.k2=2 KiB EEPROM / ROM 0xfe0800-0xffffff
+stc32g12k128.menu.eeprom.k2.build.eeprom_flags=-DSTC_EEPROM_SIZE=2048UL -DSTC_EEPROM_FLASH_START=0xfe0000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g12k128.menu.eeprom.k2.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfe0800" -Wl--code-window=0xfe0800:0x1000000
+stc32g12k128.menu.eeprom.k2.build.flash_flags=--function-sections --data-sections
+stc32g12k128.menu.eeprom.k2.upload.maximum_size=129024
+stc32g12k128.menu.eeprom.k4=4 KiB EEPROM / ROM 0xfe1000-0xffffff
+stc32g12k128.menu.eeprom.k4.build.eeprom_flags=-DSTC_EEPROM_SIZE=4096UL -DSTC_EEPROM_FLASH_START=0xfe0000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g12k128.menu.eeprom.k4.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfe1000" -Wl--code-window=0xfe1000:0x1000000
+stc32g12k128.menu.eeprom.k4.build.flash_flags=--function-sections --data-sections
+stc32g12k128.menu.eeprom.k4.upload.maximum_size=126976
+stc32g12k128.menu.eeprom.k8=8 KiB EEPROM / ROM 0xfe2000-0xffffff
+stc32g12k128.menu.eeprom.k8.build.eeprom_flags=-DSTC_EEPROM_SIZE=8192UL -DSTC_EEPROM_FLASH_START=0xfe0000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g12k128.menu.eeprom.k8.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfe2000" -Wl--code-window=0xfe2000:0x1000000
+stc32g12k128.menu.eeprom.k8.build.flash_flags=--function-sections --data-sections
+stc32g12k128.menu.eeprom.k8.upload.maximum_size=122880
+stc32g12k128.menu.eeprom.k16=16 KiB EEPROM / ROM 0xfe4000-0xffffff
+stc32g12k128.menu.eeprom.k16.build.eeprom_flags=-DSTC_EEPROM_SIZE=16384UL -DSTC_EEPROM_FLASH_START=0xfe0000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g12k128.menu.eeprom.k16.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfe4000" -Wl--code-window=0xfe4000:0x1000000
+stc32g12k128.menu.eeprom.k16.build.flash_flags=--function-sections --data-sections
+stc32g12k128.menu.eeprom.k16.upload.maximum_size=114688
+stc32g12k128.menu.eeprom.k32=32 KiB EEPROM / ROM 0xfe8000-0xffffff
+stc32g12k128.menu.eeprom.k32.build.eeprom_flags=-DSTC_EEPROM_SIZE=32768UL -DSTC_EEPROM_FLASH_START=0xfe0000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g12k128.menu.eeprom.k32.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfe8000" -Wl--code-window=0xfe8000:0x1000000
+stc32g12k128.menu.eeprom.k32.build.flash_flags=--function-sections --data-sections
+stc32g12k128.menu.eeprom.k32.upload.maximum_size=98304
 
 stc32g12k128.menu.cdc.disabled=Disabled (Serial = UART1)
 stc32g12k128.menu.cdc.disabled.build.usb_flags=-DARDUINO_USB_CDC_ON_BOOT=0
@@ -71,6 +109,7 @@ stc32g144k246.build.target=-mmcs251
 stc32g144k246.build.mode_flags=-DSTC_EXECUTION_MODE_MCS251
 stc32g144k246.build.core_flags=-DSTC_CORE_FAMILY_32=1 -DSTC_CORE_HAS_PORT0=1 -DSTC_CORE_HAS_PORT1=1 -DSTC_CORE_HAS_PORT2=1 -DSTC_CORE_HAS_PORT3=1 -DSTC_CORE_HAS_PORT4=1 -DSTC_CORE_HAS_PORT5=1 -DSTC_CORE_HAS_PORT6=1 -DSTC_CORE_HAS_PORT7=1 -DSTC_CORE_HAS_PORT8=1 -DSTC_CORE_HAS_PORT9=1 -DSTC_CORE_HAS_PORTA=1 -DSTC_CORE_HAS_PORTB=1 -DSTC_CORE_HAS_PORT_MODE=1 -DSTC_CORE_PWM_LAYOUT=1 -DSTC_CORE_MEMORY_TIMING_LAYOUT=2 -DSTC_CORE_BUS_LAYOUT=0 -DSTC_CORE_USB_LAYOUT=2 -DSTC_CORE_CAN_LAYOUT=2 -DSTC_CORE_WIRE_LAYOUT=2 -DSTC_CORE_HAS_SEPARATE_PULLUP=1 -DSTC_CORE_TIMER1_IS_1T=1 -DSTC_CORE_HAS_UART1=1 -DSTC_CORE_UART_COUNT=8 -DSTC_CORE_I2C_COUNT=2 -DSTC_CORE_UART_AVAILABLE_MASK=255 -DSTC_CORE_SPI_COUNT=3 -DSTC_CORE_SPI_LAYOUT=2 -DSTC_CORE_SERIAL_BUFFERED_RX=1 -DSTC_CORE_HAS_ADC=1 -DSTC_CORE_ADC_LAYOUT=4 -DSTC_CORE_ADC_NATIVE_BITS=12
 stc32g144k246.build.timer_flags=-DSTC_TIMER0_CLOCK_DIVIDER=12UL
+stc32g144k246.build.eeprom_flags=-DSTC_EEPROM_SIZE=0UL -DSTC_EEPROM_FLASH_START=0xfc2800UL -DSTC_EEPROM_SECTOR_SIZE=512UL
 stc32g144k246.build.flash_flags=--function-sections --data-sections
 stc32g144k246.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfc2800" -Wl--code-window=0xfc2800:0x1000000
 stc32g144k246.build.cpp_target_link_flags=-DSTCXX_MCS251_IRAM_SIZE=0x4000 -DSTCXX_MCS251_STACK_LOC=0x100 -DSTCXX_MCS251_STACK_SIZE=0x3f00
@@ -88,6 +127,42 @@ stc32g144k246.upload.maximum_data_size=131072
 stc32g144k246.upload.maximum_idata_size=0
 stc32g144k246.upload.maximum_xdata_size=131072
 stc32g144k246.upload.maximum_edata_size=16384
+
+stc32g144k246.menu.eeprom.none=Disabled (all Flash for program, default)
+stc32g144k246.menu.eeprom.none.build.eeprom_flags=-DSTC_EEPROM_SIZE=0UL -DSTC_EEPROM_FLASH_START=0xfc2800UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g144k246.menu.eeprom.none.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfc2800" -Wl--code-window=0xfc2800:0x1000000
+stc32g144k246.menu.eeprom.none.build.flash_flags=--function-sections --data-sections
+stc32g144k246.menu.eeprom.none.upload.maximum_size=251904
+stc32g144k246.menu.eeprom.k1=1 KiB EEPROM / ROM 0xfc2c00-0xffffff
+stc32g144k246.menu.eeprom.k1.build.eeprom_flags=-DSTC_EEPROM_SIZE=1024UL -DSTC_EEPROM_FLASH_START=0xfc2800UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g144k246.menu.eeprom.k1.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfc2c00" -Wl--code-window=0xfc2c00:0x1000000
+stc32g144k246.menu.eeprom.k1.build.flash_flags=--function-sections --data-sections
+stc32g144k246.menu.eeprom.k1.upload.maximum_size=250880
+stc32g144k246.menu.eeprom.k2=2 KiB EEPROM / ROM 0xfc3000-0xffffff
+stc32g144k246.menu.eeprom.k2.build.eeprom_flags=-DSTC_EEPROM_SIZE=2048UL -DSTC_EEPROM_FLASH_START=0xfc2800UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g144k246.menu.eeprom.k2.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfc3000" -Wl--code-window=0xfc3000:0x1000000
+stc32g144k246.menu.eeprom.k2.build.flash_flags=--function-sections --data-sections
+stc32g144k246.menu.eeprom.k2.upload.maximum_size=249856
+stc32g144k246.menu.eeprom.k4=4 KiB EEPROM / ROM 0xfc3800-0xffffff
+stc32g144k246.menu.eeprom.k4.build.eeprom_flags=-DSTC_EEPROM_SIZE=4096UL -DSTC_EEPROM_FLASH_START=0xfc2800UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g144k246.menu.eeprom.k4.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfc3800" -Wl--code-window=0xfc3800:0x1000000
+stc32g144k246.menu.eeprom.k4.build.flash_flags=--function-sections --data-sections
+stc32g144k246.menu.eeprom.k4.upload.maximum_size=247808
+stc32g144k246.menu.eeprom.k8=8 KiB EEPROM / ROM 0xfc4800-0xffffff
+stc32g144k246.menu.eeprom.k8.build.eeprom_flags=-DSTC_EEPROM_SIZE=8192UL -DSTC_EEPROM_FLASH_START=0xfc2800UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g144k246.menu.eeprom.k8.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfc4800" -Wl--code-window=0xfc4800:0x1000000
+stc32g144k246.menu.eeprom.k8.build.flash_flags=--function-sections --data-sections
+stc32g144k246.menu.eeprom.k8.upload.maximum_size=243712
+stc32g144k246.menu.eeprom.k16=16 KiB EEPROM / ROM 0xfc6800-0xffffff
+stc32g144k246.menu.eeprom.k16.build.eeprom_flags=-DSTC_EEPROM_SIZE=16384UL -DSTC_EEPROM_FLASH_START=0xfc2800UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g144k246.menu.eeprom.k16.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfc6800" -Wl--code-window=0xfc6800:0x1000000
+stc32g144k246.menu.eeprom.k16.build.flash_flags=--function-sections --data-sections
+stc32g144k246.menu.eeprom.k16.upload.maximum_size=235520
+stc32g144k246.menu.eeprom.k32=32 KiB EEPROM / ROM 0xfca800-0xffffff
+stc32g144k246.menu.eeprom.k32.build.eeprom_flags=-DSTC_EEPROM_SIZE=32768UL -DSTC_EEPROM_FLASH_START=0xfc2800UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g144k246.menu.eeprom.k32.build.link_flags=--code-loc 0xff0000 "-Wl-b GSINIT0=0xfca800" -Wl--code-window=0xfca800:0x1000000
+stc32g144k246.menu.eeprom.k32.build.flash_flags=--function-sections --data-sections
+stc32g144k246.menu.eeprom.k32.upload.maximum_size=219136
 
 stc32g144k246.menu.cdc.disabled=Disabled (Serial = UART1)
 stc32g144k246.menu.cdc.disabled.build.usb_flags=-DARDUINO_USB_CDC_ON_BOOT=0
@@ -145,6 +220,7 @@ stc32g8k64.build.target=-mmcs251
 stc32g8k64.build.mode_flags=-DSTC_EXECUTION_MODE_MCS251
 stc32g8k64.build.core_flags=-DSTC_CORE_FAMILY_32=1 -DSTC_CORE_HAS_PORT0=1 -DSTC_CORE_HAS_PORT1=1 -DSTC_CORE_HAS_PORT2=1 -DSTC_CORE_HAS_PORT3=1 -DSTC_CORE_HAS_PORT4=1 -DSTC_CORE_HAS_PORT5=1 -DSTC_CORE_HAS_PORT6=1 -DSTC_CORE_HAS_PORT7=1 -DSTC_CORE_HAS_PORT8=0 -DSTC_CORE_HAS_PORT9=0 -DSTC_CORE_HAS_PORTA=0 -DSTC_CORE_HAS_PORTB=0 -DSTC_CORE_HAS_PORT_MODE=1 -DSTC_CORE_PWM_LAYOUT=1 -DSTC_CORE_MEMORY_TIMING_LAYOUT=1 -DSTC_CORE_BUS_LAYOUT=1 -DSTC_CORE_USB_LAYOUT=0 -DSTC_CORE_CAN_LAYOUT=1 -DSTC_CORE_WIRE_LAYOUT=1 -DSTC_CORE_HAS_SEPARATE_PULLUP=0 -DSTC_CORE_TIMER1_IS_1T=1 -DSTC_CORE_HAS_UART1=1 -DSTC_CORE_UART_COUNT=4 -DSTC_CORE_I2C_COUNT=1 -DSTC_CORE_UART_AVAILABLE_MASK=15 -DSTC_CORE_SPI_COUNT=1 -DSTC_CORE_SPI_LAYOUT=1 -DSTC_CORE_SERIAL_BUFFERED_RX=1 -DSTC_CORE_HAS_ADC=1 -DSTC_CORE_ADC_LAYOUT=4 -DSTC_CORE_ADC_NATIVE_BITS=12
 stc32g8k64.build.timer_flags=
+stc32g8k64.build.eeprom_flags=-DSTC_EEPROM_SIZE=0UL -DSTC_EEPROM_FLASH_START=0x1000000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
 stc32g8k64.build.flash_flags=
 stc32g8k64.build.link_flags=--code-loc 0xff0000
 stc32g8k64.build.cpp_target_link_flags=-DSTCXX_MCS251_IRAM_SIZE=0x800 -DSTCXX_MCS251_STACK_LOC=0x100 -DSTCXX_MCS251_STACK_SIZE=0x700
@@ -162,6 +238,42 @@ stc32g8k64.upload.maximum_data_size=6144
 stc32g8k64.upload.maximum_idata_size=0
 stc32g8k64.upload.maximum_xdata_size=6144
 stc32g8k64.upload.maximum_edata_size=2048
+
+stc32g8k64.menu.eeprom.none=Disabled (all Flash for program, default)
+stc32g8k64.menu.eeprom.none.build.eeprom_flags=-DSTC_EEPROM_SIZE=0UL -DSTC_EEPROM_FLASH_START=0x1000000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g8k64.menu.eeprom.none.build.link_flags=--code-loc 0xff0000
+stc32g8k64.menu.eeprom.none.build.flash_flags=
+stc32g8k64.menu.eeprom.none.upload.maximum_size=65536
+stc32g8k64.menu.eeprom.k1=1 KiB EEPROM / ROM 0xff0000-0xfffbff
+stc32g8k64.menu.eeprom.k1.build.eeprom_flags=-DSTC_EEPROM_SIZE=1024UL -DSTC_EEPROM_FLASH_START=0xfffc00UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g8k64.menu.eeprom.k1.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xfffc00
+stc32g8k64.menu.eeprom.k1.build.flash_flags=
+stc32g8k64.menu.eeprom.k1.upload.maximum_size=64512
+stc32g8k64.menu.eeprom.k2=2 KiB EEPROM / ROM 0xff0000-0xfff7ff
+stc32g8k64.menu.eeprom.k2.build.eeprom_flags=-DSTC_EEPROM_SIZE=2048UL -DSTC_EEPROM_FLASH_START=0xfff800UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g8k64.menu.eeprom.k2.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xfff800
+stc32g8k64.menu.eeprom.k2.build.flash_flags=
+stc32g8k64.menu.eeprom.k2.upload.maximum_size=63488
+stc32g8k64.menu.eeprom.k4=4 KiB EEPROM / ROM 0xff0000-0xffefff
+stc32g8k64.menu.eeprom.k4.build.eeprom_flags=-DSTC_EEPROM_SIZE=4096UL -DSTC_EEPROM_FLASH_START=0xfff000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g8k64.menu.eeprom.k4.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xfff000
+stc32g8k64.menu.eeprom.k4.build.flash_flags=
+stc32g8k64.menu.eeprom.k4.upload.maximum_size=61440
+stc32g8k64.menu.eeprom.k8=8 KiB EEPROM / ROM 0xff0000-0xffdfff
+stc32g8k64.menu.eeprom.k8.build.eeprom_flags=-DSTC_EEPROM_SIZE=8192UL -DSTC_EEPROM_FLASH_START=0xffe000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g8k64.menu.eeprom.k8.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xffe000
+stc32g8k64.menu.eeprom.k8.build.flash_flags=
+stc32g8k64.menu.eeprom.k8.upload.maximum_size=57344
+stc32g8k64.menu.eeprom.k16=16 KiB EEPROM / ROM 0xff0000-0xffbfff
+stc32g8k64.menu.eeprom.k16.build.eeprom_flags=-DSTC_EEPROM_SIZE=16384UL -DSTC_EEPROM_FLASH_START=0xffc000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g8k64.menu.eeprom.k16.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xffc000
+stc32g8k64.menu.eeprom.k16.build.flash_flags=
+stc32g8k64.menu.eeprom.k16.upload.maximum_size=49152
+stc32g8k64.menu.eeprom.k32=32 KiB EEPROM / ROM 0xff0000-0xff7fff
+stc32g8k64.menu.eeprom.k32.build.eeprom_flags=-DSTC_EEPROM_SIZE=32768UL -DSTC_EEPROM_FLASH_START=0xff8000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32g8k64.menu.eeprom.k32.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xff8000
+stc32g8k64.menu.eeprom.k32.build.flash_flags=
+stc32g8k64.menu.eeprom.k32.upload.maximum_size=32768
 
 stc32g8k64.build.cpp_core_flags=--stack-auto -DSTCXX_CPP_CORE=1 -DSTCXX_FLASH_STRINGS=0 -DSTCXX_ENFORCE_NO_EXCEPTIONS_RTTI=1 -DSTCXX_HEAP_SIZE=4096UL
 stc32g8k64.build.cpp_link_flags=--stack-auto -DSTCXX_CPP_CORE=1
@@ -187,6 +299,7 @@ stc32cl8k64.build.target=-mmcs251
 stc32cl8k64.build.mode_flags=-DSTC_EXECUTION_MODE_MCS251
 stc32cl8k64.build.core_flags=-DSTC_CORE_FAMILY_32=1 -DSTC_CORE_HAS_PORT0=1 -DSTC_CORE_HAS_PORT1=1 -DSTC_CORE_HAS_PORT2=1 -DSTC_CORE_HAS_PORT3=1 -DSTC_CORE_HAS_PORT4=1 -DSTC_CORE_HAS_PORT5=1 -DSTC_CORE_HAS_PORT6=1 -DSTC_CORE_HAS_PORT7=1 -DSTC_CORE_HAS_PORT8=0 -DSTC_CORE_HAS_PORT9=0 -DSTC_CORE_HAS_PORTA=0 -DSTC_CORE_HAS_PORTB=0 -DSTC_CORE_HAS_PORT_MODE=1 -DSTC_CORE_PWM_LAYOUT=1 -DSTC_CORE_MEMORY_TIMING_LAYOUT=1 -DSTC_CORE_BUS_LAYOUT=1 -DSTC_CORE_USB_LAYOUT=0 -DSTC_CORE_CAN_LAYOUT=1 -DSTC_CORE_WIRE_LAYOUT=1 -DSTC_CORE_HAS_SEPARATE_PULLUP=1 -DSTC_CORE_TIMER1_IS_1T=1 -DSTC_CORE_HAS_UART1=1 -DSTC_CORE_UART_COUNT=4 -DSTC_CORE_I2C_COUNT=1 -DSTC_CORE_UART_AVAILABLE_MASK=13 -DSTC_CORE_SPI_COUNT=1 -DSTC_CORE_SPI_LAYOUT=1 -DSTC_CORE_SERIAL_BUFFERED_RX=1 -DSTC_CORE_HAS_ADC=1 -DSTC_CORE_ADC_LAYOUT=4 -DSTC_CORE_ADC_NATIVE_BITS=12
 stc32cl8k64.build.timer_flags=
+stc32cl8k64.build.eeprom_flags=-DSTC_EEPROM_SIZE=0UL -DSTC_EEPROM_FLASH_START=0x1000000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
 stc32cl8k64.build.flash_flags=
 stc32cl8k64.build.link_flags=--code-loc 0xff0000
 stc32cl8k64.build.cpp_target_link_flags=-DSTCXX_MCS251_IRAM_SIZE=0x800 -DSTCXX_MCS251_STACK_LOC=0x100 -DSTCXX_MCS251_STACK_SIZE=0x700
@@ -204,6 +317,42 @@ stc32cl8k64.upload.maximum_data_size=6144
 stc32cl8k64.upload.maximum_idata_size=0
 stc32cl8k64.upload.maximum_xdata_size=6144
 stc32cl8k64.upload.maximum_edata_size=2048
+
+stc32cl8k64.menu.eeprom.none=Disabled (all Flash for program, default)
+stc32cl8k64.menu.eeprom.none.build.eeprom_flags=-DSTC_EEPROM_SIZE=0UL -DSTC_EEPROM_FLASH_START=0x1000000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32cl8k64.menu.eeprom.none.build.link_flags=--code-loc 0xff0000
+stc32cl8k64.menu.eeprom.none.build.flash_flags=
+stc32cl8k64.menu.eeprom.none.upload.maximum_size=65536
+stc32cl8k64.menu.eeprom.k1=1 KiB EEPROM / ROM 0xff0000-0xfffbff
+stc32cl8k64.menu.eeprom.k1.build.eeprom_flags=-DSTC_EEPROM_SIZE=1024UL -DSTC_EEPROM_FLASH_START=0xfffc00UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32cl8k64.menu.eeprom.k1.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xfffc00
+stc32cl8k64.menu.eeprom.k1.build.flash_flags=
+stc32cl8k64.menu.eeprom.k1.upload.maximum_size=64512
+stc32cl8k64.menu.eeprom.k2=2 KiB EEPROM / ROM 0xff0000-0xfff7ff
+stc32cl8k64.menu.eeprom.k2.build.eeprom_flags=-DSTC_EEPROM_SIZE=2048UL -DSTC_EEPROM_FLASH_START=0xfff800UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32cl8k64.menu.eeprom.k2.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xfff800
+stc32cl8k64.menu.eeprom.k2.build.flash_flags=
+stc32cl8k64.menu.eeprom.k2.upload.maximum_size=63488
+stc32cl8k64.menu.eeprom.k4=4 KiB EEPROM / ROM 0xff0000-0xffefff
+stc32cl8k64.menu.eeprom.k4.build.eeprom_flags=-DSTC_EEPROM_SIZE=4096UL -DSTC_EEPROM_FLASH_START=0xfff000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32cl8k64.menu.eeprom.k4.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xfff000
+stc32cl8k64.menu.eeprom.k4.build.flash_flags=
+stc32cl8k64.menu.eeprom.k4.upload.maximum_size=61440
+stc32cl8k64.menu.eeprom.k8=8 KiB EEPROM / ROM 0xff0000-0xffdfff
+stc32cl8k64.menu.eeprom.k8.build.eeprom_flags=-DSTC_EEPROM_SIZE=8192UL -DSTC_EEPROM_FLASH_START=0xffe000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32cl8k64.menu.eeprom.k8.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xffe000
+stc32cl8k64.menu.eeprom.k8.build.flash_flags=
+stc32cl8k64.menu.eeprom.k8.upload.maximum_size=57344
+stc32cl8k64.menu.eeprom.k16=16 KiB EEPROM / ROM 0xff0000-0xffbfff
+stc32cl8k64.menu.eeprom.k16.build.eeprom_flags=-DSTC_EEPROM_SIZE=16384UL -DSTC_EEPROM_FLASH_START=0xffc000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32cl8k64.menu.eeprom.k16.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xffc000
+stc32cl8k64.menu.eeprom.k16.build.flash_flags=
+stc32cl8k64.menu.eeprom.k16.upload.maximum_size=49152
+stc32cl8k64.menu.eeprom.k32=32 KiB EEPROM / ROM 0xff0000-0xff7fff
+stc32cl8k64.menu.eeprom.k32.build.eeprom_flags=-DSTC_EEPROM_SIZE=32768UL -DSTC_EEPROM_FLASH_START=0xff8000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+stc32cl8k64.menu.eeprom.k32.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xff8000
+stc32cl8k64.menu.eeprom.k32.build.flash_flags=
+stc32cl8k64.menu.eeprom.k32.upload.maximum_size=32768
 
 stc32cl8k64.menu.uploadcheck.manual=Use selected model, skip unavailable ID (default)
 stc32cl8k64.menu.uploadcheck.manual.upload.model_check_flags=--force-unverified-target
@@ -234,6 +383,7 @@ ai8051u_34k64.build.target=-mmcs251
 ai8051u_34k64.build.mode_flags=-DSTC_EXECUTION_MODE_MCS251
 ai8051u_34k64.build.core_flags=-DSTC_CORE_FAMILY_AI8051U=1 -DSTC_CORE_HAS_PORT0=1 -DSTC_CORE_HAS_PORT1=1 -DSTC_CORE_HAS_PORT2=1 -DSTC_CORE_HAS_PORT3=1 -DSTC_CORE_HAS_PORT4=1 -DSTC_CORE_HAS_PORT5=1 -DSTC_CORE_HAS_PORT6=1 -DSTC_CORE_HAS_PORT7=1 -DSTC_CORE_HAS_PORT8=0 -DSTC_CORE_HAS_PORT9=0 -DSTC_CORE_HAS_PORTA=0 -DSTC_CORE_HAS_PORTB=0 -DSTC_CORE_HAS_PORT_MODE=1 -DSTC_CORE_PWM_LAYOUT=2 -DSTC_CORE_MEMORY_TIMING_LAYOUT=1 -DSTC_CORE_BUS_LAYOUT=0 -DSTC_CORE_USB_LAYOUT=1 -DSTC_CORE_CAN_LAYOUT=0 -DSTC_CORE_WIRE_LAYOUT=0 -DSTC_CORE_HAS_SEPARATE_PULLUP=0 -DSTC_CORE_TIMER1_IS_1T=1 -DSTC_CORE_HAS_UART1=1 -DSTC_CORE_UART_COUNT=4 -DSTC_CORE_I2C_COUNT=1 -DSTC_CORE_UART_AVAILABLE_MASK=15 -DSTC_CORE_SPI_COUNT=1 -DSTC_CORE_SPI_LAYOUT=3 -DSTC_CORE_SERIAL_BUFFERED_RX=1 -DSTC_CORE_HAS_ADC=1 -DSTC_CORE_ADC_LAYOUT=4 -DSTC_CORE_ADC_NATIVE_BITS=12
 ai8051u_34k64.build.timer_flags=
+ai8051u_34k64.build.eeprom_flags=-DSTC_EEPROM_SIZE=0UL -DSTC_EEPROM_FLASH_START=0x1000000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
 ai8051u_34k64.build.flash_flags=
 ai8051u_34k64.build.link_flags=--code-loc 0xff0000
 ai8051u_34k64.build.cpp_target_link_flags=-DSTCXX_MCS251_IRAM_SIZE=0x800 -DSTCXX_MCS251_STACK_LOC=0x100 -DSTCXX_MCS251_STACK_SIZE=0x700
@@ -251,6 +401,42 @@ ai8051u_34k64.upload.maximum_data_size=32768
 ai8051u_34k64.upload.maximum_idata_size=256
 ai8051u_34k64.upload.maximum_xdata_size=32768
 ai8051u_34k64.upload.maximum_edata_size=2048
+
+ai8051u_34k64.menu.eeprom.none=Disabled (all Flash for program, default)
+ai8051u_34k64.menu.eeprom.none.build.eeprom_flags=-DSTC_EEPROM_SIZE=0UL -DSTC_EEPROM_FLASH_START=0x1000000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+ai8051u_34k64.menu.eeprom.none.build.link_flags=--code-loc 0xff0000
+ai8051u_34k64.menu.eeprom.none.build.flash_flags=
+ai8051u_34k64.menu.eeprom.none.upload.maximum_size=65536
+ai8051u_34k64.menu.eeprom.k1=1 KiB EEPROM / ROM 0xff0000-0xfffbff
+ai8051u_34k64.menu.eeprom.k1.build.eeprom_flags=-DSTC_EEPROM_SIZE=1024UL -DSTC_EEPROM_FLASH_START=0xfffc00UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+ai8051u_34k64.menu.eeprom.k1.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xfffc00
+ai8051u_34k64.menu.eeprom.k1.build.flash_flags=
+ai8051u_34k64.menu.eeprom.k1.upload.maximum_size=64512
+ai8051u_34k64.menu.eeprom.k2=2 KiB EEPROM / ROM 0xff0000-0xfff7ff
+ai8051u_34k64.menu.eeprom.k2.build.eeprom_flags=-DSTC_EEPROM_SIZE=2048UL -DSTC_EEPROM_FLASH_START=0xfff800UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+ai8051u_34k64.menu.eeprom.k2.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xfff800
+ai8051u_34k64.menu.eeprom.k2.build.flash_flags=
+ai8051u_34k64.menu.eeprom.k2.upload.maximum_size=63488
+ai8051u_34k64.menu.eeprom.k4=4 KiB EEPROM / ROM 0xff0000-0xffefff
+ai8051u_34k64.menu.eeprom.k4.build.eeprom_flags=-DSTC_EEPROM_SIZE=4096UL -DSTC_EEPROM_FLASH_START=0xfff000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+ai8051u_34k64.menu.eeprom.k4.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xfff000
+ai8051u_34k64.menu.eeprom.k4.build.flash_flags=
+ai8051u_34k64.menu.eeprom.k4.upload.maximum_size=61440
+ai8051u_34k64.menu.eeprom.k8=8 KiB EEPROM / ROM 0xff0000-0xffdfff
+ai8051u_34k64.menu.eeprom.k8.build.eeprom_flags=-DSTC_EEPROM_SIZE=8192UL -DSTC_EEPROM_FLASH_START=0xffe000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+ai8051u_34k64.menu.eeprom.k8.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xffe000
+ai8051u_34k64.menu.eeprom.k8.build.flash_flags=
+ai8051u_34k64.menu.eeprom.k8.upload.maximum_size=57344
+ai8051u_34k64.menu.eeprom.k16=16 KiB EEPROM / ROM 0xff0000-0xffbfff
+ai8051u_34k64.menu.eeprom.k16.build.eeprom_flags=-DSTC_EEPROM_SIZE=16384UL -DSTC_EEPROM_FLASH_START=0xffc000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+ai8051u_34k64.menu.eeprom.k16.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xffc000
+ai8051u_34k64.menu.eeprom.k16.build.flash_flags=
+ai8051u_34k64.menu.eeprom.k16.upload.maximum_size=49152
+ai8051u_34k64.menu.eeprom.k32=32 KiB EEPROM / ROM 0xff0000-0xff7fff
+ai8051u_34k64.menu.eeprom.k32.build.eeprom_flags=-DSTC_EEPROM_SIZE=32768UL -DSTC_EEPROM_FLASH_START=0xff8000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
+ai8051u_34k64.menu.eeprom.k32.build.link_flags=--code-loc 0xff0000 -Wl--code-window=0xff0000:0xff8000
+ai8051u_34k64.menu.eeprom.k32.build.flash_flags=
+ai8051u_34k64.menu.eeprom.k32.upload.maximum_size=32768
 
 ai8051u_34k64.menu.cdc.disabled=Disabled (Serial = UART1)
 ai8051u_34k64.menu.cdc.disabled.build.usb_flags=-DARDUINO_USB_CDC_ON_BOOT=0
@@ -290,6 +476,7 @@ stc32g12k64.build.target=-mmcs251
 stc32g12k64.build.mode_flags=-DSTC_EXECUTION_MODE_MCS251
 stc32g12k64.build.core_flags=-DSTC_CORE_FAMILY_32=1 -DSTC_CORE_HAS_PORT0=1 -DSTC_CORE_HAS_PORT1=1 -DSTC_CORE_HAS_PORT2=1 -DSTC_CORE_HAS_PORT3=1 -DSTC_CORE_HAS_PORT4=1 -DSTC_CORE_HAS_PORT5=1 -DSTC_CORE_HAS_PORT6=1 -DSTC_CORE_HAS_PORT7=1 -DSTC_CORE_HAS_PORT8=0 -DSTC_CORE_HAS_PORT9=0 -DSTC_CORE_HAS_PORTA=0 -DSTC_CORE_HAS_PORTB=0 -DSTC_CORE_HAS_PORT_MODE=1 -DSTC_CORE_PWM_LAYOUT=1 -DSTC_CORE_MEMORY_TIMING_LAYOUT=1 -DSTC_CORE_BUS_LAYOUT=1 -DSTC_CORE_USB_LAYOUT=1 -DSTC_CORE_CAN_LAYOUT=1 -DSTC_CORE_WIRE_LAYOUT=1 -DSTC_CORE_HAS_SEPARATE_PULLUP=0 -DSTC_CORE_TIMER1_IS_1T=1 -DSTC_CORE_HAS_UART1=1 -DSTC_CORE_UART_COUNT=4 -DSTC_CORE_I2C_COUNT=1 -DSTC_CORE_UART_AVAILABLE_MASK=15 -DSTC_CORE_SPI_COUNT=1 -DSTC_CORE_SPI_LAYOUT=1 -DSTC_CORE_SERIAL_BUFFERED_RX=1 -DSTC_CORE_HAS_ADC=1 -DSTC_CORE_ADC_LAYOUT=4 -DSTC_CORE_ADC_NATIVE_BITS=12
 stc32g12k64.build.timer_flags=
+stc32g12k64.build.eeprom_flags=-DSTC_EEPROM_SIZE=65536UL -DSTC_EEPROM_FLASH_START=0xfe0000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
 stc32g12k64.build.flash_flags=
 stc32g12k64.build.link_flags=--code-loc 0xff0000
 stc32g12k64.build.cpp_target_link_flags=-DSTCXX_MCS251_IRAM_SIZE=0x1000 -DSTCXX_MCS251_STACK_LOC=0x100 -DSTCXX_MCS251_STACK_SIZE=0xf00
@@ -343,6 +530,7 @@ stc32g8k48.build.target=-mmcs251
 stc32g8k48.build.mode_flags=-DSTC_EXECUTION_MODE_MCS251
 stc32g8k48.build.core_flags=-DSTC_CORE_FAMILY_32=1 -DSTC_CORE_HAS_PORT0=1 -DSTC_CORE_HAS_PORT1=1 -DSTC_CORE_HAS_PORT2=1 -DSTC_CORE_HAS_PORT3=1 -DSTC_CORE_HAS_PORT4=1 -DSTC_CORE_HAS_PORT5=1 -DSTC_CORE_HAS_PORT6=1 -DSTC_CORE_HAS_PORT7=1 -DSTC_CORE_HAS_PORT8=0 -DSTC_CORE_HAS_PORT9=0 -DSTC_CORE_HAS_PORTA=0 -DSTC_CORE_HAS_PORTB=0 -DSTC_CORE_HAS_PORT_MODE=1 -DSTC_CORE_PWM_LAYOUT=1 -DSTC_CORE_MEMORY_TIMING_LAYOUT=1 -DSTC_CORE_BUS_LAYOUT=1 -DSTC_CORE_USB_LAYOUT=0 -DSTC_CORE_CAN_LAYOUT=1 -DSTC_CORE_WIRE_LAYOUT=1 -DSTC_CORE_HAS_SEPARATE_PULLUP=0 -DSTC_CORE_TIMER1_IS_1T=1 -DSTC_CORE_HAS_UART1=1 -DSTC_CORE_UART_COUNT=4 -DSTC_CORE_I2C_COUNT=1 -DSTC_CORE_UART_AVAILABLE_MASK=15 -DSTC_CORE_SPI_COUNT=1 -DSTC_CORE_SPI_LAYOUT=1 -DSTC_CORE_SERIAL_BUFFERED_RX=1 -DSTC_CORE_HAS_ADC=1 -DSTC_CORE_ADC_LAYOUT=4 -DSTC_CORE_ADC_NATIVE_BITS=12
 stc32g8k48.build.timer_flags=
+stc32g8k48.build.eeprom_flags=-DSTC_EEPROM_SIZE=16384UL -DSTC_EEPROM_FLASH_START=0xffc000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
 stc32g8k48.build.flash_flags=
 stc32g8k48.build.link_flags=--code-loc 0xff0000
 stc32g8k48.build.cpp_target_link_flags=-DSTCXX_MCS251_IRAM_SIZE=0x800 -DSTCXX_MCS251_STACK_LOC=0x100 -DSTCXX_MCS251_STACK_SIZE=0x700
@@ -385,6 +573,7 @@ stc32cl8k48.build.target=-mmcs251
 stc32cl8k48.build.mode_flags=-DSTC_EXECUTION_MODE_MCS251
 stc32cl8k48.build.core_flags=-DSTC_CORE_FAMILY_32=1 -DSTC_CORE_HAS_PORT0=1 -DSTC_CORE_HAS_PORT1=1 -DSTC_CORE_HAS_PORT2=1 -DSTC_CORE_HAS_PORT3=1 -DSTC_CORE_HAS_PORT4=1 -DSTC_CORE_HAS_PORT5=1 -DSTC_CORE_HAS_PORT6=1 -DSTC_CORE_HAS_PORT7=1 -DSTC_CORE_HAS_PORT8=0 -DSTC_CORE_HAS_PORT9=0 -DSTC_CORE_HAS_PORTA=0 -DSTC_CORE_HAS_PORTB=0 -DSTC_CORE_HAS_PORT_MODE=1 -DSTC_CORE_PWM_LAYOUT=1 -DSTC_CORE_MEMORY_TIMING_LAYOUT=1 -DSTC_CORE_BUS_LAYOUT=1 -DSTC_CORE_USB_LAYOUT=0 -DSTC_CORE_CAN_LAYOUT=1 -DSTC_CORE_WIRE_LAYOUT=1 -DSTC_CORE_HAS_SEPARATE_PULLUP=1 -DSTC_CORE_TIMER1_IS_1T=1 -DSTC_CORE_HAS_UART1=1 -DSTC_CORE_UART_COUNT=4 -DSTC_CORE_I2C_COUNT=1 -DSTC_CORE_UART_AVAILABLE_MASK=13 -DSTC_CORE_SPI_COUNT=1 -DSTC_CORE_SPI_LAYOUT=1 -DSTC_CORE_SERIAL_BUFFERED_RX=1 -DSTC_CORE_HAS_ADC=1 -DSTC_CORE_ADC_LAYOUT=4 -DSTC_CORE_ADC_NATIVE_BITS=12
 stc32cl8k48.build.timer_flags=
+stc32cl8k48.build.eeprom_flags=-DSTC_EEPROM_SIZE=16384UL -DSTC_EEPROM_FLASH_START=0xffc000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
 stc32cl8k48.build.flash_flags=
 stc32cl8k48.build.link_flags=--code-loc 0xff0000
 stc32cl8k48.build.cpp_target_link_flags=-DSTCXX_MCS251_IRAM_SIZE=0x800 -DSTCXX_MCS251_STACK_LOC=0x100 -DSTCXX_MCS251_STACK_SIZE=0x700
@@ -432,6 +621,7 @@ ai8051u_34k32.build.target=-mmcs251
 ai8051u_34k32.build.mode_flags=-DSTC_EXECUTION_MODE_MCS251
 ai8051u_34k32.build.core_flags=-DSTC_CORE_FAMILY_AI8051U=1 -DSTC_CORE_HAS_PORT0=1 -DSTC_CORE_HAS_PORT1=1 -DSTC_CORE_HAS_PORT2=1 -DSTC_CORE_HAS_PORT3=1 -DSTC_CORE_HAS_PORT4=1 -DSTC_CORE_HAS_PORT5=1 -DSTC_CORE_HAS_PORT6=1 -DSTC_CORE_HAS_PORT7=1 -DSTC_CORE_HAS_PORT8=0 -DSTC_CORE_HAS_PORT9=0 -DSTC_CORE_HAS_PORTA=0 -DSTC_CORE_HAS_PORTB=0 -DSTC_CORE_HAS_PORT_MODE=1 -DSTC_CORE_PWM_LAYOUT=2 -DSTC_CORE_MEMORY_TIMING_LAYOUT=1 -DSTC_CORE_BUS_LAYOUT=0 -DSTC_CORE_USB_LAYOUT=1 -DSTC_CORE_CAN_LAYOUT=0 -DSTC_CORE_WIRE_LAYOUT=0 -DSTC_CORE_HAS_SEPARATE_PULLUP=0 -DSTC_CORE_TIMER1_IS_1T=1 -DSTC_CORE_HAS_UART1=1 -DSTC_CORE_UART_COUNT=4 -DSTC_CORE_I2C_COUNT=1 -DSTC_CORE_UART_AVAILABLE_MASK=15 -DSTC_CORE_SPI_COUNT=1 -DSTC_CORE_SPI_LAYOUT=3 -DSTC_CORE_SERIAL_BUFFERED_RX=1 -DSTC_CORE_HAS_ADC=1 -DSTC_CORE_ADC_LAYOUT=4 -DSTC_CORE_ADC_NATIVE_BITS=12
 ai8051u_34k32.build.timer_flags=
+ai8051u_34k32.build.eeprom_flags=-DSTC_EEPROM_SIZE=32768UL -DSTC_EEPROM_FLASH_START=0xff8000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
 ai8051u_34k32.build.flash_flags=
 ai8051u_34k32.build.link_flags=--code-loc 0xff0000
 ai8051u_34k32.build.cpp_target_link_flags=-DSTCXX_MCS251_IRAM_SIZE=0x800 -DSTCXX_MCS251_STACK_LOC=0x100 -DSTCXX_MCS251_STACK_SIZE=0x700
@@ -484,6 +674,7 @@ ai8051u_34k16.build.target=-mmcs251
 ai8051u_34k16.build.mode_flags=-DSTC_EXECUTION_MODE_MCS251
 ai8051u_34k16.build.core_flags=-DSTC_CORE_FAMILY_AI8051U=1 -DSTC_CORE_HAS_PORT0=1 -DSTC_CORE_HAS_PORT1=1 -DSTC_CORE_HAS_PORT2=1 -DSTC_CORE_HAS_PORT3=1 -DSTC_CORE_HAS_PORT4=1 -DSTC_CORE_HAS_PORT5=1 -DSTC_CORE_HAS_PORT6=1 -DSTC_CORE_HAS_PORT7=1 -DSTC_CORE_HAS_PORT8=0 -DSTC_CORE_HAS_PORT9=0 -DSTC_CORE_HAS_PORTA=0 -DSTC_CORE_HAS_PORTB=0 -DSTC_CORE_HAS_PORT_MODE=1 -DSTC_CORE_PWM_LAYOUT=2 -DSTC_CORE_MEMORY_TIMING_LAYOUT=1 -DSTC_CORE_BUS_LAYOUT=0 -DSTC_CORE_USB_LAYOUT=1 -DSTC_CORE_CAN_LAYOUT=0 -DSTC_CORE_WIRE_LAYOUT=0 -DSTC_CORE_HAS_SEPARATE_PULLUP=0 -DSTC_CORE_TIMER1_IS_1T=1 -DSTC_CORE_HAS_UART1=1 -DSTC_CORE_UART_COUNT=4 -DSTC_CORE_I2C_COUNT=1 -DSTC_CORE_UART_AVAILABLE_MASK=15 -DSTC_CORE_SPI_COUNT=1 -DSTC_CORE_SPI_LAYOUT=3 -DSTC_CORE_SERIAL_BUFFERED_RX=1 -DSTC_CORE_HAS_ADC=1 -DSTC_CORE_ADC_LAYOUT=4 -DSTC_CORE_ADC_NATIVE_BITS=12
 ai8051u_34k16.build.timer_flags=
+ai8051u_34k16.build.eeprom_flags=-DSTC_EEPROM_SIZE=49152UL -DSTC_EEPROM_FLASH_START=0xff4000UL -DSTC_EEPROM_SECTOR_SIZE=512UL
 ai8051u_34k16.build.flash_flags=
 ai8051u_34k16.build.link_flags=--code-loc 0xff0000
 ai8051u_34k16.build.cpp_target_link_flags=-DSTCXX_MCS251_IRAM_SIZE=0x800 -DSTCXX_MCS251_STACK_LOC=0x100 -DSTCXX_MCS251_STACK_SIZE=0x700

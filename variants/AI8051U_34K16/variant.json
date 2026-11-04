@@ -16,6 +16,12 @@
     "idata_bytes": 256,
     "xdata_bytes": 32768,
     "edata_bytes": 2048,
+    "eeprom_layout": {
+      "allocation": "separate",
+      "sector_bytes": 512,
+      "flash_start": 16728064,
+      "fixed_bytes": 49152
+    },
     "flash_origin": "0xff0000",
     "linker_layout": "post_home_contiguous",
     "code_origin": "0xff0000"

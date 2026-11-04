@@ -2,7 +2,7 @@
 # See README.md and tools/stcxx-driver/README.md for compiler usage and support boundaries.
 
 name=mcs251
-version=0.0.2
+version=0.0.3
 
 compiler.warning_flags=--less-pedantic --stcxx-warnings=default
 compiler.warning_flags.none=--less-pedantic --stcxx-warnings=none
@@ -39,6 +39,7 @@ compiler.ar.flags=rcs
 compiler.systemincludes="-I{runtime.tools.stcxx-toolchain.path}/sdcc/include" "-I{runtime.tools.stcxx-toolchain.path}/sdcc/include/mcs51"
 
 build.extra_flags=
+build.eeprom_flags=
 build.usb_flags=
 build.xram_flags=
 build.link_flags=
@@ -54,11 +55,11 @@ compiler.ar.extra_flags=
 compiler.libraries.ldflags=
 
 
-recipe.c.o.pattern="{compiler.driver}" --platform "{runtime.platform.path}" compile-unit "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{object_file}" re1 {compiler.dep.flags} {compiler.c.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.c.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
+recipe.c.o.pattern="{compiler.driver}" --platform "{runtime.platform.path}" compile-unit "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{object_file}" re1 {compiler.dep.flags} {compiler.c.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.eeprom_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.c.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
 
-recipe.cpp.o.pattern="{compiler.driver}" --platform "{runtime.platform.path}" compile-unit "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{object_file}" re2 {compiler.dep.flags} {compiler.cpp.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.cpp.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
+recipe.cpp.o.pattern="{compiler.driver}" --platform "{runtime.platform.path}" compile-unit "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{object_file}" re2 {compiler.dep.flags} {compiler.cpp.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.eeprom_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.cpp.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
 
-recipe.S.o.pattern="{compiler.driver}" --platform "{runtime.platform.path}" compile-unit "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{object_file}" re3 {compiler.S.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.S.extra_flags} {build.extra_flags} {includes}
+recipe.S.o.pattern="{compiler.driver}" --platform "{runtime.platform.path}" compile-unit "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{object_file}" re3 {compiler.S.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.eeprom_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.S.extra_flags} {build.extra_flags} {includes}
 
 # The native driver packages Arduino core cache sidecars with the SDAR archive.
 recipe.ar.pattern="{compiler.driver}" archive-unit "{archive_file_path}" "{object_file}"
@@ -76,9 +77,9 @@ recipe.size.regex.data=^STC_RAM_BYTES ([0-9]+)$
 
 # Arduino CLI/IDE library discovery and prototype generation.
 preproc.includes.flags=-M -MG -MP
-recipe.preproc.includes="{compiler.driver}" --platform "{runtime.platform.path}" compile "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{preprocessed_file_path}" re11 {preproc.includes.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.cpp.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
+recipe.preproc.includes="{compiler.driver}" --platform "{runtime.platform.path}" compile "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{preprocessed_file_path}" re11 {preproc.includes.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.eeprom_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.cpp.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
 preproc.macros.flags=-E -dM
-recipe.preproc.macros="{compiler.driver}" --platform "{runtime.platform.path}" compile "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{preprocessed_file_path}" re12 {preproc.macros.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.cpp.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
+recipe.preproc.macros="{compiler.driver}" --platform "{runtime.platform.path}" compile "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{preprocessed_file_path}" re12 {preproc.macros.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.eeprom_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.cpp.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
 
 # The IDE's Upload action uses the host-native programmer installed by Boards Manager.
 tools.stc-cli.path={runtime.tools.stc-cli.path}

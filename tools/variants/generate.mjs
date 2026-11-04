@@ -4,6 +4,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { eepromConfigurations } from "./eeprom.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const root = join(scriptDir, "..", "..");
@@ -288,14 +289,14 @@ function hexAddress(value) {
   return `0x${value.toString(16)}`;
 }
 
-function renderLinkFlags(linker) {
+function renderLinkFlags(linker, eeprom) {
   if (linker === undefined) return "";
   const flags = [`--code-loc ${hexAddress(linker.code_loc)}`];
   if (["pre_home_contiguous", "segmented_home"].includes(linker.layout)) {
-    flags.push(`"-Wl-b GSINIT0=${hexAddress(linker.gsinit0_loc)}"`);
+    flags.push(`"-Wl-b GSINIT0=${hexAddress(eeprom?.codeStart ?? linker.gsinit0_loc)}"`);
   }
-  if (linker.layout === "segmented_home") {
-    flags.push(`-Wl--code-window=${hexAddress(linker.gsinit0_loc)}:${hexAddress(MCS251_ADDRESS_SPACE_END)}`);
+  if (linker.layout === "segmented_home" || (eeprom && eeprom.id !== "none")) {
+    flags.push(`-Wl--code-window=${hexAddress(eeprom?.codeStart ?? linker.gsinit0_loc)}:${hexAddress(eeprom?.codeEnd ?? MCS251_ADDRESS_SPACE_END)}`);
   }
   return flags.join(" ");
 }
@@ -544,6 +545,7 @@ function loadDatabase() {
     if (device.target === "mcs251" && device.linker === undefined) {
       throw new Error(`${device.model} requires an explicit MCS251 high-address linker layout`);
     }
+    eepromConfigurations(device);
     if (!isObject(device.capabilities) ||
         !Array.isArray(device.capabilities.ports) ||
         device.capabilities.ports.length === 0 ||
@@ -702,6 +704,7 @@ function renderBoards(devices) {
     "menu.uploadtransport=Upload method",
     "menu.cdc=USB CDC On Boot",
     "menu.xram=XRAM layout",
+    "menu.eeprom=User EEPROM size / ROM start",
     "",
   ];
   for (const device of devices) {
@@ -709,6 +712,7 @@ function renderBoards(devices) {
     let display = device.model;
     if (device.target === "mcs251") display += " (experimental MCS251)";
     const defaultTarget = device.target;
+    const eepromOptions = eepromConfigurations(device);
     lines.push(
       `#################### ${device.model} ####################`,
       `${board}.name=${display}`,
@@ -725,6 +729,7 @@ function renderBoards(devices) {
       `${board}.build.mode_flags=-DSTC_EXECUTION_MODE_${defaultTarget.toUpperCase()}`,
       `${board}.build.core_flags=${renderCoreFlags(device)}`,
       `${board}.build.timer_flags=${renderTimerFlags(device)}`,
+      `${board}.build.eeprom_flags=${eepromOptions[0].flags}`,
       `${board}.build.flash_flags=${renderFlashFlags(
         device.target === "mcs251" ? device.linker : undefined,
       )}`,
@@ -748,6 +753,21 @@ function renderBoards(devices) {
       `${board}.upload.maximum_edata_size=${device.edata_bytes}`,
       "",
     );
+
+    if (device.eeprom_layout.allocation !== "separate") {
+      for (const option of eepromOptions) {
+        const label = option.size === 0 ? "Disabled (all Flash for program, default)" :
+          `${option.size < 1024 ? `${option.size} B` : `${option.size / 1024} KiB`} EEPROM / ROM ${hexAddress(option.codeStart)}-${hexAddress(option.codeEnd - 1)}`;
+        lines.push(
+          `${board}.menu.eeprom.${option.id}=${label}`,
+          `${board}.menu.eeprom.${option.id}.build.eeprom_flags=${option.flags}`,
+          `${board}.menu.eeprom.${option.id}.build.link_flags=${renderLinkFlags(device.linker, option)}`,
+          `${board}.menu.eeprom.${option.id}.build.flash_flags=${renderFlashFlags(device.linker)}`,
+          `${board}.menu.eeprom.${option.id}.upload.maximum_size=${option.maximumCodeBytes}`,
+        );
+      }
+      lines.push("");
+    }
 
     if (device.capabilities.usb_layout) {
       lines.push(
@@ -1023,6 +1043,7 @@ function renderMetadata(database, device) {
     idata_bytes: device.idata_bytes,
     xdata_bytes: device.xdata_bytes,
     edata_bytes: device.edata_bytes,
+    eeprom_layout: device.eeprom_layout,
   };
   if (device.usb_ram_bytes !== undefined) memory.usb_ram_bytes = device.usb_ram_bytes;
   if (device.executable_ram_bytes !== undefined) memory.executable_ram_bytes = device.executable_ram_bytes;
