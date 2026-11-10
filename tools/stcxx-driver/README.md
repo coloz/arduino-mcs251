@@ -16,7 +16,9 @@ builds; see the sibling `stcxx/sdk/README.md` for installation and usage.
 adapter, C/C++ compilation, core cache, LLVM archive selection, CBE adaptation,
 constructor bridge, member-function alignment, native storage checks, heap and
 stack validation, linking and memory reporting. It launches compiler executables
-using argument arrays. No shell or interpreter is loaded by the driver.
+using argument arrays. Arduino adaptation calls the shared compiler in the same
+process; it does not launch another copy of `stcxx`. No shell or interpreter is
+loaded by the driver.
 
 Command traces and the link success marker use stdout so Arduino IDE displays
 them as ordinary build information. Preprocessor recipes omit traces to keep
@@ -64,8 +66,14 @@ path spelling, encoding and make escaping; explicit `-MF` destinations are
 honored too. Windows ANSI dependency paths are decoded only for internal
 metadata; the file read by Arduino retains SDCC's original encoding.
 Unchanged builds reuse these objects. Native C compilation no longer starts
-Clang just to discover its resource directory. Toolchain verification reuses
-each file's hash within one invocation, still checking every lock entry.
+Clang just to discover its resource directory. A prebuild hook starts a fresh
+toolchain verification session under `build.path/stcxx/verification`. Compilation,
+dependency discovery, macro preprocessing and linking share that session. An OS
+file lock coordinates parallel compiler processes, so unchanged toolchain files
+are fully hashed once per build. Expected file digests, resolved tool paths, driver
+identity and tool file metadata must still match before reusing that result;
+changed or missing files trigger verification or an error. Standalone invocations
+without a session keep the full verification pass.
 
 Trimmed native RELs and listings are cached under the build's
 `stcxx/native-source-closure/` directory. Reuse requires matching source/header

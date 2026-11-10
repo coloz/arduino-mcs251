@@ -8,7 +8,6 @@ use std::{
     fs,
     io::{Cursor, Read, Write},
     path::{Path, PathBuf},
-    process::Command,
 };
 use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions};
 
@@ -105,14 +104,10 @@ fn unpack(bytes: &[u8], kind: &str) -> Result<(Files, Value)> {
     }
     Ok((files, meta))
 }
-fn child(platform: &Path, args: &[String]) -> Result<()> {
-    let status = Command::new(std::env::current_exe()?)
-        .arg("--platform")
-        .arg(platform)
-        .args(args)
-        .status()?;
-    ensure!(status.success(), "STCXX {} failed ({status})", args[0]);
-    Ok(())
+fn run_compiler(platform: &Path, args: &[String]) -> Result<()> {
+    let mut forwarded = vec!["--platform".into(), text(platform)];
+    forwarded.extend_from_slice(args);
+    stcxx_driver::run(forwarded)
 }
 
 pub fn dispatch() -> Result<bool> {
@@ -216,7 +211,7 @@ fn compile(platform: &Path, args: &[String]) -> Result<()> {
         }
     }
     forwarded.extend(["-MF".into(), text(&raw_dep)]);
-    child(platform, &forwarded)?;
+    run_compiler(platform, &forwarded)?;
     let mut files = Files::new();
     for path in [
         raw.clone(),
@@ -378,7 +373,7 @@ fn materialize_archive(platform: &Path, sdar: &Path, bytes: &[u8], work: &Path) 
             format!("{}-", &digest(key.as_bytes())[..16])
         };
         let object = materialize_unit(&unit, &directory, &prefix)?;
-        child(
+        run_compiler(
             platform,
             &[
                 "archive".into(),
@@ -450,7 +445,7 @@ fn link(platform: &Path, args: &[String]) -> Result<()> {
             forwarded.push(arg.clone());
         }
     }
-    child(platform, &forwarded)?;
+    run_compiler(platform, &forwarded)?;
     let elf = crate::firmware::from_hex(&fs::read(&hex)?)?;
     write(
         &output.with_extension("mem"),
@@ -460,6 +455,7 @@ fn link(platform: &Path, args: &[String]) -> Result<()> {
 }
 
 fn prepare(build: &Path, sketch: &Path) -> Result<()> {
+    stcxx_driver::begin_verification_session(&build.join("stcxx/verification"))?;
     // Arduino CLI already copies these files. Only the builder's environment
     // requires its existing generated-sketch hook; no builder version switch.
     let Some(env_build) = std::env::var_os("BUILD_PATH") else {
@@ -560,6 +556,37 @@ fn mirror(build: &Path, sketch: &Path, main: Option<&Path>) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn compiler_calls_return_errors_in_process() {
+        let temp = tempfile::tempdir().unwrap();
+        let platform = temp.path().join("platform with spaces");
+        let error = run_compiler(&platform, &["compile".into()]).unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "compile requires sdcc, source, output, recipe marker"
+        );
+        let error = run_compiler(&platform, &["unsupported-adapter-operation".into()]).unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "unknown operation: unsupported-adapter-operation"
+        );
+    }
+
+    #[test]
+    fn sketch_hook_resets_verification_before_optional_source_mirroring() {
+        let temp = tempfile::tempdir().unwrap();
+        let build = temp.path().join("build with spaces");
+        let sketch = temp.path().join("sketch");
+        let session = build.join("stcxx/verification");
+        fs::create_dir_all(&session).unwrap();
+        fs::write(session.join("verified.json"), br#"{"previous":"build"}"#).unwrap();
+        prepare(&build, &sketch).unwrap();
+        let receipt: Value =
+            serde_json::from_slice(&fs::read(session.join("verified.json")).unwrap()).unwrap();
+        assert!(receipt.is_null());
+        assert!(session.join("verification.lock").is_file());
+    }
+
     #[test]
     fn dependency_target_keeps_path_encoding_and_escaping() {
         for (input, expected) in [

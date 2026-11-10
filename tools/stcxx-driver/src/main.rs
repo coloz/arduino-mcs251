@@ -8,7 +8,7 @@ fn main() {
         Ok(false) => {}
         Err(error) => {
             eprintln!("stcxx Arduino adapter: {error:#}");
-            std::process::exit(2);
+            std::process::exit(stcxx_driver::process_exit_code(&error));
         }
     }
     stcxx_driver::main_entry();

@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: coloz/stcxx
-          ref: 8dd3bc6eb5e07e3ff40d90e0d473097f6acedc33
+          ref: 99345fe7d7394514bbc854fb0792d3f6d70c15d8
           path: stcxx
           sparse-checkout: |
             compiler
@@ -105,7 +105,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: coloz/stcxx
-          ref: 8dd3bc6eb5e07e3ff40d90e0d473097f6acedc33
+          ref: 99345fe7d7394514bbc854fb0792d3f6d70c15d8
           path: stcxx
           sparse-checkout: |
             compiler

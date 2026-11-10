@@ -2,7 +2,7 @@
 # See README.md and tools/stcxx-driver/README.md for compiler usage and support boundaries.
 
 name=mcs251
-version=0.0.3
+version=0.0.4
 
 compiler.warning_flags=--less-pedantic --stcxx-warnings=default
 compiler.warning_flags.none=--less-pedantic --stcxx-warnings=none
@@ -19,10 +19,11 @@ compiler.backend.ar.cmd=sdar
 compiler.c.cmd=stcxx
 compiler.c.cmd.windows=stcxx.exe
 compiler.dep.flags=-MMD
-compiler.c.flags=-c --std-sdcc11 --opt-code-size -Ddouble=float -DSTC_CORE_REVISION=2026092602 -DSTC_CORE_LAYOUT=2 --model-{build.memory_model} {compiler.warning_flags} {build.flash_flags}
+compiler.verification.flags="--stcxx-verification-session={build.path}/stcxx/verification"
+compiler.c.flags=-c --std-sdcc11 --opt-code-size -Ddouble=float -DSTC_CORE_REVISION=2026092602 -DSTC_CORE_LAYOUT=2 --model-{build.memory_model} {compiler.warning_flags} {build.flash_flags} {compiler.verification.flags}
 compiler.c.elf.cmd=stcxx
 compiler.c.elf.cmd.windows=stcxx.exe
-compiler.c.elf.flags=--code-size {upload.maximum_size} --xram-size {upload.maximum_xdata_size} {build.xram_flags} --model-{build.memory_model} {build.link_flags} {build.flash_flags}
+compiler.c.elf.flags=--code-size {upload.maximum_size} --xram-size {upload.maximum_xdata_size} {build.xram_flags} --model-{build.memory_model} {build.link_flags} {build.flash_flags} {compiler.verification.flags}
 
 # Every board uses the locked native Clang/LLVM-CBE bridge for C++ and
 # the shared SDCC backend for C hardware drivers, with the MCS251 ABI.
@@ -30,7 +31,7 @@ compiler.cpp.cmd=stcxx
 compiler.cpp.cmd.windows=stcxx.exe
 compiler.cpp.flags={compiler.c.flags}
 
-compiler.S.flags={compiler.warning_flags}
+compiler.S.flags={compiler.warning_flags} {compiler.verification.flags}
 compiler.ar.cmd=stcxx
 compiler.ar.cmd.windows=stcxx.exe
 compiler.size.cmd=stcxx
@@ -76,9 +77,9 @@ recipe.size.regex=^STC_PROGRAM_BYTES ([0-9]+)$
 recipe.size.regex.data=^STC_RAM_BYTES ([0-9]+)$
 
 # Arduino CLI/IDE library discovery and prototype generation.
-preproc.includes.flags=-M -MG -MP
+preproc.includes.flags=-M -MG -MP {compiler.verification.flags}
 recipe.preproc.includes="{compiler.driver}" --platform "{runtime.platform.path}" compile "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{preprocessed_file_path}" re11 {preproc.includes.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.eeprom_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.cpp.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
-preproc.macros.flags=-E -dM
+preproc.macros.flags=-E -dM {compiler.verification.flags}
 recipe.preproc.macros="{compiler.driver}" --platform "{runtime.platform.path}" compile "{compiler.backend.path}/{compiler.backend.c.cmd}" "{source_file}" "{preprocessed_file_path}" re12 {preproc.macros.flags} {build.target} -D{build.mcu_macro} -DF_CPU={build.f_cpu} {build.mode_flags} {build.core_flags} {build.timer_flags} {build.eeprom_flags} {build.usb_flags} {build.cpp_core_flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} {compiler.cpp.extra_flags} {build.extra_flags} {includes} {compiler.systemincludes}
 
 # The IDE's Upload action uses the host-native programmer installed by Boards Manager.
