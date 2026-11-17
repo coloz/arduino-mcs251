@@ -275,6 +275,10 @@ def assemble(drivers, output):
 
 
 def main():
+    # Windows runner consoles may default to cp1252, while regression paths
+    # deliberately contain Unicode. Keep logs portable on every host.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     validate = commands.add_parser("validate-host")

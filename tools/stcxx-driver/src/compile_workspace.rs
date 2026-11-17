@@ -784,9 +784,16 @@ mod tests {
         )
         .unwrap();
         workspace.snapshot_c(&temp.path().join("out")).unwrap();
-        assert!(workspace.flags[0].contains("src1"));
-        assert_eq!(workspace.flags[1], flags[0]);
-        assert_eq!(workspace.flags[2], flags[1]);
+        #[cfg(windows)]
+        {
+            assert!(workspace.flags[0].contains("src1"));
+            assert_eq!(workspace.flags[1], flags[0]);
+            assert_eq!(workspace.flags[2], flags[1]);
+        }
+        // Other hosts can read these external paths directly, so their
+        // original include search roots remain in place.
+        #[cfg(not(windows))]
+        assert_eq!(&workspace.flags[..flags.len()], flags);
         assert!(!temp.path().join("out/src2").exists());
     }
 
