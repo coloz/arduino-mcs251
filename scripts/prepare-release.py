@@ -160,7 +160,9 @@ def validate_host(host, work, arduino_cli, output):
     long_path_build = None
     if host == "windows-x86_64":
         def long_directory(label, leaf):
-            path = work / ("长路径 空格 " + label)
+            # The supplementary character also exercises non-ANSI paths on
+            # Chinese Windows hosts, whose ACP can represent Chinese text.
+            path = work / ("长路径 空格 🦥 " + label)
             while len(str(path / leaf)) < 300:
                 path /= "nested-path-segment-0123456789-abcdefghijklmnop"
             return path / leaf
@@ -275,9 +277,10 @@ def assemble(drivers, output):
          "--assets", output, "--previous", ROOT / "package_mcs251_index.json", "--output", index])
     run([sys.executable, ROOT / "scripts/verify-release-assets.py", index, output, "--version", version])
     report = output / "release-validation.json"
+    repository, run_id = os.environ.get("GITHUB_REPOSITORY"), os.environ.get("GITHUB_RUN_ID")
     save(report, {"version": version, "source_commit": source_commit,
                   "hosts": reports, "platform_sha256": digest(archive), "index_sha256": digest(index),
-                  "run_url": f"https://github.com/{os.environ.get('GITHUB_REPOSITORY')}/actions/runs/{os.environ.get('GITHUB_RUN_ID')}",
+                  "run_url": f"https://github.com/{repository}/actions/runs/{run_id}" if repository and run_id else None,
                   "hardware_tested": False})
     (output / "SHA256SUMS").write_text("".join(f"{digest(path)}  {path.name}\n" for path in (archive, index, report)),
                                        encoding="ascii", newline="\n")
