@@ -627,7 +627,14 @@ fn decode_native_dependency(bytes: &[u8], code_page: u32) -> Result<String> {
     }
     let length = i32::try_from(bytes.len())?;
     let size = unsafe {
-        MultiByteToWideChar(code_page, 8, bytes.as_ptr(), length, std::ptr::null_mut(), 0)
+        MultiByteToWideChar(
+            code_page,
+            8,
+            bytes.as_ptr(),
+            length,
+            std::ptr::null_mut(),
+            0,
+        )
     };
     ensure!(
         size > 0,
@@ -636,7 +643,14 @@ fn decode_native_dependency(bytes: &[u8], code_page: u32) -> Result<String> {
     );
     let mut wide = vec![0u16; size as usize];
     let written = unsafe {
-        MultiByteToWideChar(code_page, 8, bytes.as_ptr(), length, wide.as_mut_ptr(), size)
+        MultiByteToWideChar(
+            code_page,
+            8,
+            bytes.as_ptr(),
+            length,
+            wide.as_mut_ptr(),
+            size,
+        )
     };
     ensure!(written == size, "cannot decode native dependencies");
     String::from_utf16(&wide).context("native dependency contains invalid UTF-16")
@@ -1002,7 +1016,8 @@ mod tests {
             mappings: vec![(staged.clone(), original.clone())],
             snapshot_files: BTreeMap::from([(staged, original)]),
         };
-        let dependency = b"C:/stage/unit.o: C:/stage/src/main.c C:/sdk/caf\xe9.h\nC:/sdk/caf\xe9.h:\n";
+        let dependency =
+            b"C:/stage/unit.o: C:/stage/src/main.c C:/sdk/caf\xe9.h\nC:/sdk/caf\xe9.h:\n";
         let rewritten = workspace
             .rewrite_dependency_with_code_page(dependency, 1252)
             .unwrap();
