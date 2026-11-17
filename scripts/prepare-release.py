@@ -173,14 +173,22 @@ def validate_host(host, work, arduino_cli, output):
         source = sketch / (basename + ".c")
         header.write_text("#define STCXX_LONG_PATH_PROBE_VALUE 42\n", encoding="utf-8")
         source.write_text(f'#include "{header.name}"\n'
+                          "typedef char stcxx_original_file_macros_match[\n"
+                          "    sizeof(__BASE_FILE__) == sizeof(__FILE__) ? 1 : -1];\n"
                           "static inline unsigned char stcxx_release_long_path_probe(void) {\n"
                           "    return STCXX_LONG_PATH_PROBE_VALUE;\n}\n", encoding="utf-8")
         log = evidence / "windows-long-path-blink.log"
         firmware = compile_blink("stc32g12k128", build, sketch, log)
         check_hex(firmware, 0xfe0800, 0x1000000)
+        dependency = (build / "sketch" / (source.name + ".d")).read_text(encoding="utf-8")
+        restored = dependency.replace("\\ ", " ").replace("\\\\", "/").replace("\\", "/")
+        for name in (source.name, header.name):
+            require((build / "sketch" / name).as_posix() in restored,
+                    f"Long-path dependency does not retain original UTF-8 path: {name}")
         long_path_build = {"chip": "stc32g12k128", "eeprom": "k2",
                            "sketch_path_length": len(str(sketch)), "source_path_length": len(str(source)),
-                           "build_path_length": len(str(build)), "sha256": digest(firmware)}
+                           "build_path_length": len(str(build)), "sha256": digest(firmware),
+                           "dependency_encoding": "utf-8", "file_macro_sizes_match": True}
         summary = json.dumps({"windows_long_path_build": long_path_build}, indent=2)
         print(summary, flush=True)
         with log.open("a", encoding="utf-8", newline="\n") as stream:
@@ -240,6 +248,7 @@ def assemble(drivers, output):
             short_path = next((row for row in report["arduino_blink_builds"] if row.get("chip") == "stc32g12k128"), {})
             require(isinstance(long_path, dict) and long_path.get("source_path_length", 0) > 260 and
                     long_path.get("build_path_length", 0) > 260 and
+                    long_path.get("dependency_encoding") == "utf-8" and long_path.get("file_macro_sizes_match") is True and
                     long_path.get("sha256") and long_path["sha256"] == short_path.get("sha256"),
                     "Missing or invalid Windows long-path qualification")
         shutil.copy2(source / binary, target / binary)

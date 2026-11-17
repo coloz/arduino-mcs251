@@ -118,14 +118,47 @@ impl CompileWorkspace {
     }
 
     /// Preserve the prerequisite bytes emitted by the compiler. Snapshot paths
-    /// are translated using the same ANSI encoding used by native depfiles.
+    /// retain native ANSI encoding when every restored path can use it. A
+    /// non-ANSI original path switches the entire native rule to UTF-8.
     pub fn rewrite_dependency(&self, dependency: &[u8]) -> Result<Vec<u8>> {
+        if self.native_dependencies {
+            #[cfg(windows)]
+            return self.rewrite_dependency_with_code_page(dependency, native_code_page());
+        }
+        self.rewrite_dependency_encoded(dependency, None)
+    }
+
+    #[cfg(windows)]
+    fn rewrite_dependency_with_code_page(
+        &self,
+        dependency: &[u8],
+        code_page: u32,
+    ) -> Result<Vec<u8>> {
+        let unicode = std::iter::once(&self.original_output)
+            .chain(std::iter::once(&self.original_source))
+            .chain(self.mappings.iter().map(|(_, original)| original))
+            .any(|path| encode_native_dependency(&spelling(path, false), code_page).is_err());
+        if unicode {
+            // Convert the complete rule, including untouched external headers.
+            // Replacing only snapshot names would produce mixed ANSI/UTF-8.
+            let decoded = decode_native_dependency(dependency, code_page)?;
+            self.rewrite_dependency_encoded(decoded.as_bytes(), None)
+        } else {
+            self.rewrite_dependency_encoded(dependency, Some(code_page))
+        }
+    }
+
+    fn rewrite_dependency_encoded(
+        &self,
+        dependency: &[u8],
+        code_page: Option<u32>,
+    ) -> Result<Vec<u8>> {
         let split = dependency
             .windows(2)
             .position(|bytes| bytes[0] == b':' && bytes[1].is_ascii_whitespace())
             .context("missing dependency target")?;
         let backslashes = dependency[..split].contains(&b'\\');
-        let mut result = make_path(&self.original_output, backslashes, self.native_dependencies)?;
+        let mut result = make_path_encoded(&self.original_output, backslashes, code_page)?;
         let mut prerequisites = dependency[split..].to_vec();
         for (from, to) in &self.mappings {
             // Object paths only occur in the target. The source snapshot maps
@@ -141,8 +174,8 @@ impl CompileWorkspace {
             for backslashes in [false, true] {
                 prerequisites = replace_bytes(
                     &prerequisites,
-                    &make_path(from, backslashes, self.native_dependencies)?,
-                    &make_path(to, backslashes, self.native_dependencies)?,
+                    &make_path_encoded(from, backslashes, code_page)?,
+                    &make_path_encoded(to, backslashes, code_page)?,
                 );
             }
         }
@@ -365,10 +398,9 @@ impl CompileWorkspace {
             // Native headers also observe the translation unit's base file.
             // A command-line definition restores it without inspecting their
             // conditional or dynamic include subgraphs.
-            make_path(&source, false, true)?;
             self.flags.push(format!(
                 "-D__BASE_FILE__={}",
-                serde_json::to_string(&source.to_string_lossy())?
+                c_string_literal_utf8(&source.to_string_lossy())
             ));
         }
         Ok(())
@@ -513,6 +545,22 @@ fn spelling(path: &Path, backslashes: bool) -> String {
     }
 }
 
+// Native Windows argv uses the ANSI code page. Keep this logical UTF-8 file
+// identity in an ASCII C literal so it survives that conversion losslessly.
+fn c_string_literal_utf8(text: &str) -> String {
+    let mut literal = String::from("\"");
+    for byte in text.bytes() {
+        match byte {
+            b'"' => literal.push_str("\\\""),
+            b'\\' => literal.push_str("\\\\"),
+            b' '..=b'~' => literal.push(byte as char),
+            _ => literal.push_str(&format!("\\{byte:03o}")),
+        }
+    }
+    literal.push('"');
+    literal
+}
+
 fn hash(path: &Path) -> Result<String> {
     Ok(format!("{:x}", Sha256::digest(fs::read(path)?)))
 }
@@ -531,7 +579,7 @@ fn preserve_modified_time(original: &Path, copied: &Path) -> Result<()> {
         })
 }
 
-fn make_path(path: &Path, backslashes: bool, native: bool) -> Result<Vec<u8>> {
+fn make_path_encoded(path: &Path, backslashes: bool, code_page: Option<u32>) -> Result<Vec<u8>> {
     let text = spelling(path, backslashes);
     let mut escaped = String::new();
     for ch in text.chars() {
@@ -543,23 +591,55 @@ fn make_path(path: &Path, backslashes: bool, native: bool) -> Result<Vec<u8>> {
         }
         escaped.push(ch);
     }
-    if !native {
-        return Ok(escaped.into_bytes());
-    }
-    #[cfg(not(windows))]
-    {
-        Ok(escaped.into_bytes())
-    }
     #[cfg(windows)]
-    {
-        #[link(name = "kernel32")]
-        unsafe extern "system" {
-            fn GetACP() -> u32;
-        }
-        let code_page = unsafe { GetACP() };
-        encode_native_dependency(&escaped, code_page)
-            .with_context(|| format!("encode dependency path {}", path.display()))
+    if let Some(code_page) = code_page {
+        return encode_native_dependency(&escaped, code_page)
+            .with_context(|| format!("encode dependency path {}", path.display()));
     }
+    let _ = code_page;
+    Ok(escaped.into_bytes())
+}
+
+#[cfg(windows)]
+fn native_code_page() -> u32 {
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetACP() -> u32;
+    }
+    unsafe { GetACP() }
+}
+
+#[cfg(windows)]
+fn decode_native_dependency(bytes: &[u8], code_page: u32) -> Result<String> {
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn MultiByteToWideChar(
+            code_page: u32,
+            flags: u32,
+            bytes: *const u8,
+            bytes_len: i32,
+            wide: *mut u16,
+            wide_len: i32,
+        ) -> i32;
+    }
+    if bytes.is_empty() {
+        return Ok(String::new());
+    }
+    let length = i32::try_from(bytes.len())?;
+    let size = unsafe {
+        MultiByteToWideChar(code_page, 8, bytes.as_ptr(), length, std::ptr::null_mut(), 0)
+    };
+    ensure!(
+        size > 0,
+        "cannot decode native dependencies in Windows code page {code_page}: {}",
+        std::io::Error::last_os_error()
+    );
+    let mut wide = vec![0u16; size as usize];
+    let written = unsafe {
+        MultiByteToWideChar(code_page, 8, bytes.as_ptr(), length, wide.as_mut_ptr(), size)
+    };
+    ensure!(written == size, "cannot decode native dependencies");
+    String::from_utf16(&wide).context("native dependency contains invalid UTF-16")
 }
 
 #[cfg(windows)]
@@ -873,6 +953,78 @@ mod tests {
     }
 
     #[test]
+    fn base_file_literal_preserves_utf8_bytes_through_ascii_native_arguments() {
+        let literal = c_string_literal_utf8("C:/é/中9\\\".c");
+        assert!(literal.is_ascii());
+        assert_eq!(literal, "\"C:/\\303\\251/\\344\\270\\2559\\\\\\\".c\"");
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("中文 source/main.c");
+        fs::create_dir_all(source.parent().unwrap()).unwrap();
+        fs::write(&source, b"const char *base = __BASE_FILE__;\n").unwrap();
+        let directory = temp.path().join("out");
+        let mut workspace = CompileWorkspace::new(
+            &directory,
+            &source,
+            &temp.path().join("main.c.o"),
+            "re2",
+            &[],
+        )
+        .unwrap();
+        workspace.snapshot_c(&directory).unwrap();
+        assert_eq!(
+            workspace.flags.last().unwrap(),
+            &format!(
+                "-D__BASE_FILE__={}",
+                c_string_literal_utf8(&source.to_string_lossy())
+            )
+        );
+        assert!(workspace.flags.last().unwrap().is_ascii());
+        let content = fs::read_to_string(&workspace.source).unwrap();
+        assert!(content.starts_with(&format!(
+            "#line 1 {}\n",
+            serde_json::to_string(&spelling(&source, false)).unwrap()
+        )));
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn non_ansi_original_paths_transcode_the_entire_native_dependency_rule() {
+        let staged = PathBuf::from("C:/stage/src/main.c");
+        let original = PathBuf::from("C:/中文 project/main.c");
+        let mut workspace = CompileWorkspace {
+            source: staged.clone(),
+            object: PathBuf::from("C:/stage/unit.o"),
+            dependency: PathBuf::from("C:/stage/unit.d"),
+            flags: Vec::new(),
+            original_source: original.clone(),
+            original_output: PathBuf::from("C:/中文 project/main.c.o"),
+            native_dependencies: true,
+            mappings: vec![(staged.clone(), original.clone())],
+            snapshot_files: BTreeMap::from([(staged, original)]),
+        };
+        let dependency = b"C:/stage/unit.o: C:/stage/src/main.c C:/sdk/caf\xe9.h\nC:/sdk/caf\xe9.h:\n";
+        let rewritten = workspace
+            .rewrite_dependency_with_code_page(dependency, 1252)
+            .unwrap();
+        assert_eq!(
+            std::str::from_utf8(&rewritten).unwrap(),
+            "C:/中文\\ project/main.c.o: C:/中文\\ project/main.c C:/sdk/café.h\nC:/sdk/café.h:\n"
+        );
+        // Fully representable originals keep every untouched native byte.
+        workspace.original_source = PathBuf::from("C:/original/main.c");
+        workspace.original_output = PathBuf::from("C:/original/main.c.o");
+        workspace.mappings[0].1 = workspace.original_source.clone();
+        let native = workspace
+            .rewrite_dependency_with_code_page(dependency, 1252)
+            .unwrap();
+        assert_eq!(
+            native,
+            b"C:/original/main.c.o: C:/original/main.c C:/sdk/caf\xe9.h\nC:/sdk/caf\xe9.h:\n"
+        );
+        assert!(decode_native_dependency(b"invalid\xff", 65001).is_err());
+    }
+
+    #[test]
     #[cfg(windows)]
     fn dependency_encoding_rejects_best_fit_and_keeps_clang_utf8() {
         assert!(encode_native_dependency("C:/Ł/🦀.o", 1252).is_err());
@@ -886,7 +1038,7 @@ mod tests {
             unicode.as_bytes()
         );
         assert_eq!(
-            make_path(Path::new(unicode), false, false).unwrap(),
+            make_path_encoded(Path::new(unicode), false, None).unwrap(),
             unicode.as_bytes()
         );
     }

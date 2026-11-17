@@ -274,7 +274,8 @@ fn compile(platform: &Path, args: &[String]) -> Result<()> {
         json!({"object":output.file_name().unwrap().to_string_lossy()}),
     )?;
     // Public targets use the requested object name, retaining the compiler's
-    // prerequisite spelling, make escaping and native dependency encoding.
+    // prerequisite spelling and make escaping. Unrepresentable Windows paths
+    // require the complete native dependency rule to be restored as UTF-8.
     let dependency = fs::read(&raw_dep)?;
     let target = unit.rewrite_dependency(&dependency)?;
     write(&dep, &target)?;

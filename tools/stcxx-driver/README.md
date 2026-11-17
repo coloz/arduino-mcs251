@@ -62,9 +62,12 @@ translation-unit state. `stcxx/native-source-closure.json` records the selected
 sources and rebuilt archives.
 
 Native C dependency rules target Arduino's `.o` file while preserving SDCC's
-path spelling, encoding and make escaping; explicit `-MF` destinations are
-honored too. Windows ANSI dependency paths are decoded only for internal
-metadata; the file read by Arduino retains SDCC's original encoding.
+path spelling and make escaping; explicit `-MF` destinations are honored too.
+On Windows, dependency files retain SDCC's ANSI encoding when all restored
+original paths fit the system code page. Otherwise the complete native rule,
+including untouched external headers, is decoded strictly and written as UTF-8.
+Staged `__BASE_FILE__` values use ASCII C escapes for the original UTF-8 path,
+so non-ANSI project directories survive native command-line conversion.
 Unchanged builds reuse these objects. Native C compilation no longer starts
 Clang just to discover its resource directory. A prebuild hook starts a fresh
 toolchain verification session under `build.path/stcxx/verification`. Compilation,
