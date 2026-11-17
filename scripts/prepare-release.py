@@ -186,10 +186,16 @@ def validate_host(host, work, arduino_cli, output):
         basename = "long_path_probe_" + "n" * 170
         header = sketch / (basename + ".h")
         source = sketch / (basename + ".c")
+        # Arduino CLI adds a #line for the original sketch to its copied C
+        # source. __FILE__ follows that logical location; __BASE_FILE__ names
+        # the actual build/sketch translation unit. Check each identity.
+        file_macro_size = len(str(source).encode("utf-8")) + 1
+        base_file_macro_size = len(str(build / "sketch" / source.name).encode("utf-8")) + 1
         filesystem_path(header).write_text("#define STCXX_LONG_PATH_PROBE_VALUE 42\n", encoding="utf-8")
         filesystem_path(source).write_text(f'#include "{header.name}"\n'
                           "typedef char stcxx_original_file_macros_match[\n"
-                          "    sizeof(__BASE_FILE__) == sizeof(__FILE__) ? 1 : -1];\n"
+                          f"    sizeof(__BASE_FILE__) == {base_file_macro_size} &&\n"
+                          f"    sizeof(__FILE__) == {file_macro_size} ? 1 : -1];\n"
                           "static inline unsigned char stcxx_release_long_path_probe(void) {\n"
                           "    return STCXX_LONG_PATH_PROBE_VALUE;\n}\n", encoding="utf-8")
         log = evidence / "windows-long-path-blink.log"
@@ -203,7 +209,8 @@ def validate_host(host, work, arduino_cli, output):
         long_path_build = {"chip": "stc32g12k128", "eeprom": "k2",
                            "sketch_path_length": len(str(sketch)), "source_path_length": len(str(source)),
                            "build_path_length": len(str(build)), "sha256": digest(firmware),
-                           "dependency_encoding": "utf-8", "file_macro_sizes_match": True}
+                           "dependency_encoding": "utf-8", "file_macro_sizes_match": True,
+                           "file_macro_byte_sizes": {"base_file": base_file_macro_size, "file": file_macro_size}}
         summary = json.dumps({"windows_long_path_build": long_path_build}, indent=2)
         print(summary, flush=True)
         with log.open("a", encoding="utf-8", newline="\n") as stream:
