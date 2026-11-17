@@ -958,7 +958,7 @@ mod tests {
         assert!(literal.is_ascii());
         assert_eq!(literal, "\"C:/\\303\\251/\\344\\270\\2559\\\\\\\".c\"");
         let temp = tempfile::tempdir().unwrap();
-        let source = temp.path().join("中文 source/main.c");
+        let source = std::path::absolute(temp.path().join("中文 source").join("main.c")).unwrap();
         fs::create_dir_all(source.parent().unwrap()).unwrap();
         fs::write(&source, b"const char *base = __BASE_FILE__;\n").unwrap();
         let directory = temp.path().join("out");
