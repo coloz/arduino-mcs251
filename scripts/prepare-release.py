@@ -192,12 +192,20 @@ def validate_host(host, work, arduino_cli, output):
         file_macro_size = len(str(source).encode("utf-8")) + 1
         base_file_macro_size = len(str(build / "sketch" / source.name).encode("utf-8")) + 1
         filesystem_path(header).write_text("#define STCXX_LONG_PATH_PROBE_VALUE 42\n", encoding="utf-8")
-        filesystem_path(source).write_text(f'#include "{header.name}"\n'
-                          "typedef char stcxx_original_file_macros_match[\n"
-                          f"    sizeof(__BASE_FILE__) == {base_file_macro_size} &&\n"
-                          f"    sizeof(__FILE__) == {file_macro_size} ? 1 : -1];\n"
-                          "static inline unsigned char stcxx_release_long_path_probe(void) {\n"
-                          "    return STCXX_LONG_PATH_PROBE_VALUE;\n}\n", encoding="utf-8")
+        unit_source = (f'#include "{header.name}"\n'
+                       "static inline unsigned char stcxx_release_long_path_probe(void) {\n"
+                       "    return STCXX_LONG_PATH_PROBE_VALUE;\n}\n")
+        macro_guard = ("typedef char stcxx_original_file_macros_match[\n"
+                       f"    sizeof(__BASE_FILE__) == {base_file_macro_size} &&\n"
+                       f"    sizeof(__FILE__) == {file_macro_size} ? 1 : -1];\n")
+        filesystem_path(source).write_text(macro_guard + unit_source, encoding="utf-8")
+        macro_firmware = compile_blink("stc32g12k128", build, sketch, evidence / "windows-file-macros.log")
+        check_hex(macro_firmware, 0xfe0800, 0x1000000)
+        macro_digest = digest(macro_firmware)
+        shutil.copy2(macro_firmware, evidence / "windows-file-macros.hex")
+        # SDCC retains path string literals even inside sizeof. Validate those
+        # identities above, then remove the probe to compare executable output.
+        filesystem_path(source).write_text(unit_source, encoding="utf-8")
         log = evidence / "windows-long-path-blink.log"
         firmware = compile_blink("stc32g12k128", build, sketch, log)
         check_hex(firmware, 0xfe0800, 0x1000000)
@@ -210,6 +218,7 @@ def validate_host(host, work, arduino_cli, output):
                            "sketch_path_length": len(str(sketch)), "source_path_length": len(str(source)),
                            "build_path_length": len(str(build)), "sha256": digest(firmware),
                            "dependency_encoding": "utf-8", "file_macro_sizes_match": True,
+                           "file_macro_probe_sha256": macro_digest,
                            "file_macro_byte_sizes": {"base_file": base_file_macro_size, "file": file_macro_size}}
         summary = json.dumps({"windows_long_path_build": long_path_build}, indent=2)
         print(summary, flush=True)
