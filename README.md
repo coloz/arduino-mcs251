@@ -1,6 +1,6 @@
 # arduino-mcs251
 
-面向 STC **MCS251** 芯片的 Arduino core。当前版本 **0.0.4**，支持 Windows x64 和 Apple Silicon macOS 15+，支持型号见下表。所有型号固定使用 `-mmcs251`，Arduino 架构标识为 `mcs251`。
+面向 STC **MCS251** 芯片的 Arduino core。当前版本 **0.0.5**，支持 Windows x64 和 Apple Silicon macOS 15+，支持型号见下表。所有型号固定使用 `-mmcs251`，Arduino 架构标识为 `mcs251`。
 
 项目维护人：arduino中文社区-奈何col（[arduino.me](https://arduino.me)）。
 
@@ -20,14 +20,14 @@ Arduino 构建入口为 Rust 原生 **`stcxx.exe` / `stcxx`**，通过 Clang →
 https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
 ```
 
-在开发板管理器中安装 **mcs251 0.0.4**，然后选择对应型号。Arduino CLI 可使用：
+在开发板管理器中安装 **mcs251 0.0.5**，然后选择对应型号。Arduino CLI 可使用：
 
 ```powershell
 arduino-cli core update-index --additional-urls https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
-arduino-cli core install stc:mcs251@0.0.4 --additional-urls https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
+arduino-cli core install stc:mcs251@0.0.5 --additional-urls https://raw.githubusercontent.com/coloz/arduino-mcs251/main/package_mcs251_index.json
 ```
 
-安装资源见 [v0.0.4 Release](https://github.com/coloz/arduino-mcs251/releases/tag/v0.0.4)。升级后请清理旧构建缓存并重新编译。
+安装资源见 [v0.0.5 Release](https://github.com/coloz/arduino-mcs251/releases/tag/v0.0.5)。本版修复 Windows 长路径编译与链接，完善 C/C++/汇编依赖处理、失败产物清理和诊断导出。升级后请清理旧构建缓存并重新编译，详见 [发布说明](RELEASE_NOTES.md)。
 
 开发板管理器会安装 `stcxx-toolchain` `0.3.0` 和 `stc-cli` `0.1.0-stc.2` 两项工具；`stc-cli` 负责 UART 和原生 USB 上传。
 

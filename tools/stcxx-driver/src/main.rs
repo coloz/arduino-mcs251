@@ -1,5 +1,8 @@
 mod arduino;
+mod compile_workspace;
+mod diagnostics;
 mod firmware;
+mod link_workspace;
 mod memory;
 
 fn main() {

@@ -11,5 +11,11 @@ tmp/
 *.part
 /.hardware-test/
 
-# Release binaries are generated locally or downloaded from GitHub Releases.
+# Native driver outputs are rebuilt from source, never committed.
+/tools/stcxx-driver/stcxx.exe
+/tools/stcxx-driver/stcxx
+/tools/stcxx-driver/target/
+/tools/stcxx-driver/LICENSES/
+
+# Release archives, generated indexes, checksums and validation reports.
 /dist/

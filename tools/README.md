@@ -19,3 +19,18 @@ SDK 使用预编译的 Clang、LLVM-CBE 和 SDCC，编译与打包均不应用 `
 原生驱动构建和打包见 [驱动说明](stcxx-driver/README.md)。
 Cargo 的 `target/` 和 Python 的 `__pycache__/` 是可重新生成的本地缓存，
 不属于必要源码。
+
+## Git 与发布产物
+
+构建和发布时生成的内容不提交到 Git，现有忽略规则已覆盖：
+
+- `tools/stcxx-driver/stcxx.exe`、`tools/stcxx-driver/stcxx`：各宿主的驱动二进制。
+- `tools/stcxx-driver/target/`：Cargo 构建缓存和中间产物。
+- `tools/stcxx-driver/LICENSES/`：从锁定依赖收集的许可证及宿主依赖清单。
+- `dist/`：发布 ZIP、相邻的 `.zip.json` 报告和工具包暂存产物。
+
+源码、构建脚本、`Cargo.lock`、`toolchain-lock.*.json`、`toolchain-manifest.json`
+及型号数据库继续受版本管理，它们是复现和校验发布的输入。
+`boards.txt` 和根目录 `variants/` 中已生成的平台配置随型号修改一起审查、提交；
+它们不是每次发布构建产生的二进制或缓存。根目录 `LICENSES/` 是维护的许可材料，
+与上面构建时收集的 `tools/stcxx-driver/LICENSES/` 分开管理。

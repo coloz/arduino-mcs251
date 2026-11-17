@@ -49,6 +49,15 @@ def run(args, log=None):
     return result.stdout
 
 
+def source_commits():
+    source = run(["git", "-C", ROOT, "rev-parse", "HEAD"]).strip()
+    shared = run(["git", "-C", ROOT.parent / "stcxx", "rev-parse", "HEAD"]).strip()
+    require(source and shared, "Missing source commit identity")
+    expected = os.environ.get("GITHUB_SHA")
+    require(expected is None or expected == source, "GITHUB_SHA differs from the current SDK HEAD")
+    return source, shared
+
+
 def tools(output, host=None):
     """Download exact manifest bindings, verifying before extraction or use."""
     output = output.resolve()
@@ -101,6 +110,7 @@ def tools(output, host=None):
 
 
 def validate_host(host, work, arduino_cli, output):
+    source_commit, shared_commit = source_commits()
     expected_machine = "arm64" if host == "macos-arm64" else "amd64"
     machine = platform.machine().lower()
     require(machine in ({"arm64", "aarch64"} if expected_machine == "arm64" else {"amd64", "x86_64"}),
@@ -127,25 +137,62 @@ def validate_host(host, work, arduino_cli, output):
     config = work / "arduino-cli.yaml"
     save(config, {"directories": {"data": str(work / "data"), "downloads": str(work / "downloads"), "user": str(user)}})
     run([arduino_cli, "core", "update-index", "--config-file", config], evidence / "arduino-index.log")
-    sketches = []
-    for chip, start, end in (("stc32g12k128", 0xfe0800, 0x1000000), ("stc32g8k64", 0xff0000, 0xfff800)):
-        build = work / ("b-" + chip)
+
+    def compile_blink(chip, build, sketch, log):
         run([arduino_cli, "compile", "--clean", "--config-file", config,
              "--fqbn", f"stc:mcs251:{chip}:eeprom=k2", "--build-path", build,
              "--build-property", f"runtime.tools.stcxx-toolchain.path={dependencies['stcxx-toolchain'].as_posix()}",
              "--build-property", f"runtime.tools.stc-cli.path={dependencies['stc-cli'].as_posix()}",
-             ROOT / "examples/Blink"], evidence / (chip + "-blink.log"))
+             sketch], log)
         firmware = build / "Blink.ino.hex"
         require(firmware.is_file(), f"Missing Blink firmware: {firmware}")
+        return firmware
+
+    sketches = []
+    for chip, start, end in (("stc32g12k128", 0xfe0800, 0x1000000), ("stc32g8k64", 0xff0000, 0xfff800)):
+        build = work / ("b-" + chip)
+        firmware = compile_blink(chip, build, ROOT / "examples/Blink", evidence / (chip + "-blink.log"))
         check_hex(firmware, start, end)
         shutil.copy2(firmware, evidence / (chip + "-Blink.hex"))
         sketches.append({"chip": chip, "eeprom": "k2", "sha256": digest(firmware),
                          "program_start": start, "program_end_exclusive": end})
-    shared = run(["git", "-C", ROOT.parent / "stcxx", "rev-parse", "HEAD"]).strip()
-    report = {"host": host, "machine": machine, "source_commit": os.environ.get("GITHUB_SHA"),
-              "shared_compiler_commit": shared, "driver_sha256": digest(native),
+
+    long_path_build = None
+    if host == "windows-x86_64":
+        def long_directory(label, leaf):
+            path = work / ("长路径 空格 " + label)
+            while len(str(path / leaf)) < 300:
+                path /= "nested-path-segment-0123456789-abcdefghijklmnop"
+            return path / leaf
+
+        sketch = long_directory("source", "Blink")
+        build = long_directory("build", "output")
+        shutil.copytree(ROOT / "examples/Blink", sketch, dirs_exist_ok=True)
+        basename = "long_path_probe_" + "n" * 170
+        header = sketch / (basename + ".h")
+        source = sketch / (basename + ".c")
+        header.write_text("#define STCXX_LONG_PATH_PROBE_VALUE 42\n", encoding="utf-8")
+        source.write_text(f'#include "{header.name}"\n'
+                          "static inline unsigned char stcxx_release_long_path_probe(void) {\n"
+                          "    return STCXX_LONG_PATH_PROBE_VALUE;\n}\n", encoding="utf-8")
+        log = evidence / "windows-long-path-blink.log"
+        firmware = compile_blink("stc32g12k128", build, sketch, log)
+        check_hex(firmware, 0xfe0800, 0x1000000)
+        long_path_build = {"chip": "stc32g12k128", "eeprom": "k2",
+                           "sketch_path_length": len(str(sketch)), "source_path_length": len(str(source)),
+                           "build_path_length": len(str(build)), "sha256": digest(firmware)}
+        summary = json.dumps({"windows_long_path_build": long_path_build}, indent=2)
+        print(summary, flush=True)
+        with log.open("a", encoding="utf-8", newline="\n") as stream:
+            stream.write("\n" + summary + "\n")
+        require(long_path_build["sha256"] == sketches[0]["sha256"], "Long-path Blink HEX differs from short-path Blink")
+        shutil.copy2(firmware, evidence / "windows-long-path-Blink.hex")
+
+    report = {"host": host, "machine": machine, "source_commit": source_commit,
+              "shared_compiler_commit": shared_commit, "driver_sha256": digest(native),
               "native_layout_images": 40, "rejected_eeprom_overlaps": 5,
-              "arduino_blink_builds": sketches, "hardware_tested": False}
+              "arduino_blink_builds": sketches, "windows_long_path_build": long_path_build,
+              "hardware_tested": False}
     shutil.copy2(native, output / native.name)
     shutil.copytree(ROOT / "tools/stcxx-driver/LICENSES", output / "LICENSES", dirs_exist_ok=True)
     save(evidence / "host-validation.json", report)
@@ -175,6 +222,7 @@ def check_hex(path, start, end):
 
 
 def assemble(drivers, output):
+    source_commit, shared_commit = source_commits()
     drivers, output = drivers.resolve(), output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     target = ROOT / "tools/stcxx-driver"
@@ -182,10 +230,18 @@ def assemble(drivers, output):
     for host, (_, binary, _) in HOSTS.items():
         source = drivers / ("native-driver-" + host)
         report = json.loads((source / "validation/host-validation.json").read_text(encoding="utf-8"))
-        require(report["host"] == host and report["source_commit"] == os.environ.get("GITHUB_SHA") and
+        require(report["host"] == host and report.get("source_commit") == source_commit and
+                report.get("shared_compiler_commit") == shared_commit and
                 report["native_layout_images"] == 40 and report["rejected_eeprom_overlaps"] == 5 and
                 len(report["arduino_blink_builds"]) == 2 and report["driver_sha256"] == digest(source / binary),
                 f"Invalid host qualification: {host}")
+        if host == "windows-x86_64":
+            long_path = report.get("windows_long_path_build")
+            short_path = next((row for row in report["arduino_blink_builds"] if row.get("chip") == "stc32g12k128"), {})
+            require(isinstance(long_path, dict) and long_path.get("source_path_length", 0) > 260 and
+                    long_path.get("build_path_length", 0) > 260 and
+                    long_path.get("sha256") and long_path["sha256"] == short_path.get("sha256"),
+                    "Missing or invalid Windows long-path qualification")
         shutil.copy2(source / binary, target / binary)
         for path in (source / "LICENSES").rglob("*"):
             if path.is_file():
@@ -197,7 +253,6 @@ def assemble(drivers, output):
                 else:
                     shutil.copy2(path, destination)
         reports.append(report)
-    require(len({r["shared_compiler_commit"] for r in reports}) == 1, "Host compiler source differs")
     version = next(line.split("=", 1)[1] for line in (ROOT / "platform.txt").read_text().splitlines() if line.startswith("version="))
     archive = output / f"arduino-mcs251-{version}.zip"
     run([target / "stcxx.exe", "package-platform", ROOT, archive])
@@ -211,7 +266,7 @@ def assemble(drivers, output):
          "--assets", output, "--previous", ROOT / "package_mcs251_index.json", "--output", index])
     run([sys.executable, ROOT / "scripts/verify-release-assets.py", index, output, "--version", version])
     report = output / "release-validation.json"
-    save(report, {"version": version, "source_commit": os.environ.get("GITHUB_SHA"),
+    save(report, {"version": version, "source_commit": source_commit,
                   "hosts": reports, "platform_sha256": digest(archive), "index_sha256": digest(index),
                   "run_url": f"https://github.com/{os.environ.get('GITHUB_REPOSITORY')}/actions/runs/{os.environ.get('GITHUB_RUN_ID')}",
                   "hardware_tested": False})

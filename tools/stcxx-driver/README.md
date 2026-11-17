@@ -115,6 +115,28 @@ the standalone toolchain's `bin/` directory, which has no Arduino adapter.
   inputs into the builder's existing generated-sketch directory before analysis.
   Arduino CLI already handles these files, so the hook is inactive there.
 
+On Windows, compilation and linking check the actual internal file paths against
+the native backend's encoded-byte and UTF-16 limits. Compact internal object names
+keep long sketch/library filenames out of SDAR and linker paths; public `.o` bundle
+names and dependency targets retain the names requested by the builder. A short
+workspace is selected when the planned paths do not fit. A file lock serializes
+links for the same output, and existing artifact/cache checks still apply.
+
+Clang continues to read original C++ and assembly sources. A native-incompatible C
+source uses a snapshot of its literal include closure, retaining relative include
+layout, original `__FILE__`/line information and source/dependency hashes. If that
+closure cannot be established safely (for example, a dynamic macro include in
+the incompatible C source), compilation reports the unsupported case explicitly.
+Native-compatible C sources keep their existing preprocessing behavior.
+
+Firmware, memory reports and diagnostics are written to the requested build
+directory. Exported JSON references bring their required workspace files with
+them, so `advanced-size` and diagnostic inspection remain usable after temporary
+caches are removed. `stcxx/workspace.json` records workspace provenance only.
+Link caches remain available until temporary files are cleaned; a later link
+recreates them. `STCXX_WORK_ROOT` can select another temporary root. Atomic output
+replacement also accepts long Windows paths.
+
 Existing raw `.o`/`.a` build caches must be cleaned once after this format change.
 The standalone compiler's artifact format and C/C++ implementation are unchanged.
 Run SDK adapter tests with `cargo test --manifest-path tools/stcxx-driver/Cargo.toml`.

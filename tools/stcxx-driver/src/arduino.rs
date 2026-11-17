@@ -25,11 +25,7 @@ fn suffix(path: &Path, ext: &str) -> PathBuf {
     PathBuf::from(format!("{}{ext}", path.display()))
 }
 fn write(path: &Path, bytes: &[u8]) -> Result<()> {
-    fs::create_dir_all(path.parent().context("missing output directory")?)?;
-    let mut temp = tempfile::NamedTempFile::new_in(path.parent().unwrap())?;
-    temp.write_all(bytes)?;
-    temp.persist(path)?;
-    Ok(())
+    stcxx_driver::atomic_write(path, bytes)
 }
 fn safe_name(name: &str) -> Result<()> {
     ensure!(
@@ -179,38 +175,56 @@ fn compile(platform: &Path, args: &[String]) -> Result<()> {
         args.len() >= 4,
         "compile-unit requires backend, source, output and recipe"
     );
+    if args[4..].iter().any(|flag| flag == "-E")
+        && args[4..].iter().any(|flag| flag == "-M" || flag == "-MM")
+    {
+        return preprocess_unit(platform, args);
+    }
     let output = absolute(&args[2])?;
     let source = absolute(&args[1])?;
     fs::create_dir_all(output.parent().unwrap())?;
     let temp = tempfile::Builder::new()
         .prefix(".stcxx-unit-")
         .tempdir_in(output.parent().unwrap())?;
-    let raw = temp
-        .path()
-        .join(output.file_name().context("missing object name")?);
+    let plan = crate::compile_workspace::output_paths(&output);
+    let mut staged =
+        cfg!(windows) && crate::compile_workspace::needs_source_staging(&source, &args[3])?;
+    for path in &plan {
+        staged |= !stcxx_driver::backend_paths::compatible(&temp.path().join(path))?;
+    }
+    let short = staged
+        .then(|| crate::link_workspace::temporary(&plan))
+        .transpose()?;
+    let directory = short.as_ref().map(|d| d.path()).unwrap_or(temp.path());
     let dep = args
         .windows(2)
         .find(|a| a[0] == "-MF")
         .map(|a| absolute(&a[1]))
         .transpose()?
         .unwrap_or_else(|| output.with_extension("d"));
-    let raw_dep = raw.with_extension("d");
-    let mut forwarded = vec![
-        "compile".into(),
-        args[0].clone(),
-        text(&source),
-        text(&raw),
-        args[3].clone(),
-    ];
+    let mut options = Vec::new();
     let mut flags = args[4..].iter();
     while let Some(flag) = flags.next() {
         if flag == "-MF" {
             flags.next().context("missing dependency file")?;
         } else {
-            forwarded.push(flag.clone());
+            options.push(flag.clone());
         }
     }
-    forwarded.extend(["-MF".into(), text(&raw_dep)]);
+    let unit = crate::compile_workspace::CompileWorkspace::new(
+        directory, &source, &output, &args[3], &options,
+    )?;
+    let raw = unit.object.clone();
+    let raw_dep = &unit.dependency;
+    let mut forwarded = vec![
+        "compile".into(),
+        args[0].clone(),
+        text(&unit.source),
+        text(&raw),
+        args[3].clone(),
+    ];
+    forwarded.extend(unit.flags.clone());
+    forwarded.extend(["-MF".into(), text(raw_dep)]);
     run_compiler(platform, &forwarded)?;
     let mut files = Files::new();
     for path in [
@@ -224,15 +238,21 @@ fn compile(platform: &Path, args: &[String]) -> Result<()> {
         suffix(&raw, ".stcxx.module.cbe"),
     ] {
         if path.is_file() {
-            files.insert(
-                path.file_name().unwrap().to_string_lossy().into_owned(),
-                fs::read(&path)?,
-            );
+            let mut bytes = fs::read(&path)?;
+            if path
+                .extension()
+                .is_some_and(|extension| extension == "json")
+            {
+                let mut metadata: Value = serde_json::from_slice(&bytes)?;
+                unit.rewrite_metadata(&mut metadata)?;
+                bytes = serde_json::to_vec(&metadata)?;
+            }
+            files.insert(unit.member_name(&path)?, bytes);
         }
     }
     files.insert("source".into(), fs::read(&source)?);
     // Native pruning classifies library inputs before paths move into bundles.
-    let native_name = raw
+    let native_name = output
         .with_extension("rel")
         .file_name()
         .unwrap()
@@ -251,39 +271,53 @@ fn compile(platform: &Path, args: &[String]) -> Result<()> {
     let bytes = pack(
         "unit",
         files,
-        json!({"object":raw.file_name().unwrap().to_string_lossy()}),
+        json!({"object":output.file_name().unwrap().to_string_lossy()}),
     )?;
-    // Remove only our ASCII temporary directory. Keep the compiler's path
-    // spelling, make escaping and Windows ANSI encoding in the target too.
+    // Public targets use the requested object name, retaining the compiler's
+    // prerequisite spelling, make escaping and native dependency encoding.
     let dependency = fs::read(&raw_dep)?;
-    let target = retarget_dependency(
-        &dependency,
-        temp.path().file_name().unwrap().to_str().unwrap(),
-    )?;
+    let target = unit.rewrite_dependency(&dependency)?;
     write(&dep, &target)?;
     write(&output, &bytes)
 }
 
-fn retarget_dependency(dependency: &[u8], temporary: &str) -> Result<Vec<u8>> {
-    let split = dependency
-        .windows(2)
-        .position(|s| s == b": " || s == b":\t")
-        .context("missing dependency target")?;
-    let start = dependency[..split]
-        .windows(temporary.len())
-        .position(|s| s == temporary.as_bytes())
-        .context("missing temporary dependency directory")?;
-    let mut end = start + temporary.len();
-    ensure!(
-        matches!(dependency.get(end), Some(b'/' | b'\\')),
-        "invalid dependency path"
-    );
-    while matches!(dependency.get(end), Some(b'/' | b'\\')) {
-        end += 1;
+fn preprocess_unit(platform: &Path, args: &[String]) -> Result<()> {
+    let source = absolute(&args[1])?;
+    let flags = args[4..].to_vec();
+    if crate::compile_workspace::needs_source_staging(&source, "re1")?
+        && source.extension().is_some_and(|extension| extension == "c")
+    {
+        let output = absolute("__unused__.o")?;
+        let directory =
+            crate::link_workspace::temporary(&crate::compile_workspace::output_paths(&output))?;
+        let unit = crate::compile_workspace::CompileWorkspace::new(
+            directory.path(),
+            &source,
+            &output,
+            "re1",
+            &flags,
+        )?;
+        let captured = stcxx_driver::preprocess_dependencies(
+            platform,
+            &args[0],
+            &unit.source,
+            unit.flags.clone(),
+        )?;
+        let restored = unit.rewrite_dependency(&captured)?;
+        let split = |bytes: &[u8]| {
+            bytes
+                .windows(2)
+                .position(|p| p[0] == b':' && p[1].is_ascii_whitespace())
+                .context("missing dependency rule")
+        };
+        let mut bytes = captured[..split(&captured)?].to_vec();
+        bytes.extend_from_slice(&restored[split(&restored)?..]);
+        std::io::stdout().write_all(&bytes)?;
+    } else {
+        let bytes = stcxx_driver::preprocess_dependencies(platform, &args[0], &source, flags)?;
+        std::io::stdout().write_all(&bytes)?;
     }
-    let mut result = dependency[..start].to_vec();
-    result.extend_from_slice(&dependency[end..]);
-    Ok(result)
+    Ok(())
 }
 
 fn archive(output: &Path, args: &[String], incremental: bool) -> Result<()> {
@@ -315,15 +349,29 @@ fn materialize_unit(bytes: &[u8], directory: &Path, prefix: &str) -> Result<Path
         "incomplete object bundle"
     );
     let original = Path::new(name);
-    let new_name = format!("{prefix}{name}");
+    let new_name = if matches!(name, "stcxx_heap.c.o" | "stcxx_heap_state.c.o") {
+        name.to_owned()
+    } else {
+        format!("{prefix}unit.o")
+    };
     let object = directory.join(&new_name);
     let source = suffix(&object, ".stcxx.source");
     let rel_name = text(original.with_extension("rel"));
     for (old, bytes) in files {
         let new = if old == "source" {
             source.clone()
+        } else if let Some(ext) = old.strip_prefix(name) {
+            directory.join(format!("{new_name}{ext}"))
         } else {
-            directory.join(format!("{prefix}{old}"))
+            let stem = original.file_stem().unwrap().to_string_lossy();
+            let ext = old
+                .strip_prefix(stem.as_ref())
+                .context("unrecognized unit companion")?;
+            ensure!(ext.starts_with('.'), "invalid unit companion");
+            directory.join(format!(
+                "{}{ext}",
+                Path::new(&new_name).file_stem().unwrap().to_string_lossy()
+            ))
         };
         let mut bytes = bytes;
         if old == format!("{name}.stcxx.json") {
@@ -331,11 +379,13 @@ fn materialize_unit(bytes: &[u8], directory: &Path, prefix: &str) -> Result<Path
             m["object"] = json!(text(&object));
             m["bitcode"] = json!(text(suffix(&object, ".stcxx.bc")));
             m["source"] = json!(text(&source));
+            m["original_object_name"] = json!(name);
             bytes = serde_json::to_vec(&m)?;
         }
         if old == format!("{rel_name}.stcxx-c.json") {
             let mut m: Value = serde_json::from_slice(&bytes)?;
             m["original_rel"] = json!(text(object.with_extension("rel")));
+            m["original_object_name"] = json!(name);
             bytes = serde_json::to_vec(&m)?;
         }
         write(&new, &bytes)?;
@@ -361,7 +411,7 @@ fn materialize_archive(platform: &Path, sdar: &Path, bytes: &[u8], work: &Path) 
     if output.exists() {
         fs::remove_file(&output)?;
     }
-    for (key, unit) in units {
+    for (index, (_, unit)) in units.into_iter().enumerate() {
         let (_, meta) = unpack(&unit, "unit")?;
         let special = matches!(
             meta["object"].as_str(),
@@ -370,7 +420,7 @@ fn materialize_archive(platform: &Path, sdar: &Path, bytes: &[u8], work: &Path) 
         let prefix = if special {
             String::new()
         } else {
-            format!("{}-", &digest(key.as_bytes())[..16])
+            format!("u{index:016x}-")
         };
         let object = materialize_unit(&unit, &directory, &prefix)?;
         run_compiler(
@@ -407,13 +457,158 @@ fn link(platform: &Path, args: &[String]) -> Result<()> {
         output.extension().is_some_and(|e| e == "elf"),
         "SDK link target must be .elf"
     );
-    for path in [&output, &output.with_extension("hex")] {
-        if path.exists() {
-            fs::remove_file(path)?;
+    // Keep the workspace lock until final outputs and diagnostics are published.
+    // SDCC's internal path buffers still require short paths even when Rust can
+    // read and atomically replace files in the caller's long build directory.
+    let paths = planned_link_paths(args)?;
+    let workspace = match crate::link_workspace::for_output(&output, &paths) {
+        Ok(workspace) => workspace,
+        Err(error) => {
+            invalidate_link(&output)?;
+            return Err(error);
+        }
+    };
+    invalidate_link(&output)?;
+    let link_directory = workspace
+        .as_ref()
+        .map(|w| w.directory.as_path())
+        .unwrap_or_else(|| output.parent().unwrap());
+    let hex = if workspace.is_some() {
+        let hex = link_directory.join("firmware.stcxx.hex");
+        remove_file(&link_directory.join("stcxx/manifest.json"))?;
+        remove_file(&hex)?;
+        hex
+    } else {
+        output.with_extension("stcxx.hex")
+    };
+    let result = link_inner(platform, args, &output, &hex, link_directory);
+    if let Some(workspace) = &workspace {
+        let diagnostics = copy_link_diagnostics(
+            &workspace.directory,
+            output.parent().unwrap(),
+            result.is_ok(),
+        );
+        if let Err(error) = diagnostics {
+            if result.is_ok() {
+                invalidate_link(&output)?;
+                return Err(error).context("publish link diagnostics");
+            }
+            eprintln!("stcxx: could not publish link diagnostics: {error:#}");
         }
     }
-    let work = output.parent().unwrap().join("stcxx-arduino");
-    let hex = output.with_extension("stcxx.hex");
+    if result.is_err() {
+        invalidate_link(&output)?;
+    }
+    result
+}
+
+fn remove_file(path: &Path) -> Result<()> {
+    match fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error).with_context(|| format!("remove {}", path.display())),
+    }
+}
+
+fn invalidate_link(output: &Path) -> Result<()> {
+    remove_file(output)?;
+    for extension in [
+        "hex",
+        "mem",
+        "stcxx.hex",
+        "stcxx.mem",
+        "stcxx.map",
+        "stcxx.lk",
+    ] {
+        remove_file(&output.with_extension(extension))?;
+    }
+    remove_file(&output.parent().unwrap().join("stcxx/manifest.json"))
+}
+
+fn copy_link_diagnostics(directory: &Path, build: &Path, success: bool) -> Result<()> {
+    crate::diagnostics::export(directory, build, success)
+}
+
+fn planned_link_paths(args: &[String]) -> Result<Vec<PathBuf>> {
+    // These are paths the adapter and shared pipeline actually hand to native
+    // tools. Hash placeholders have the same encoded length as real digests.
+    let hash = "0".repeat(64);
+    let mut names = std::collections::BTreeSet::from([
+        "stcxx_heap.c.rel".to_owned(),
+        "stcxx_heap_state.c.rel".to_owned(),
+        "unit.rel".to_owned(),
+    ]);
+    for argument in args.iter().skip(1).filter(|a| !a.starts_with('-')) {
+        let path = Path::new(argument);
+        if path.extension().is_some_and(|e| e == "a") {
+            let (units, _) = unpack(&fs::read(path)?, "archive")?;
+            for (index, (_, bytes)) in units.into_iter().enumerate() {
+                let (_, meta) = unpack(&bytes, "unit")?;
+                let name = meta["object"].as_str().context("missing object name")?;
+                names.insert(match name {
+                    "stcxx_heap.c.o" | "stcxx_heap_state.c.o" => {
+                        text(Path::new(name).with_extension("rel"))
+                    }
+                    _ => format!("u{index:016x}-unit.rel"),
+                });
+            }
+        }
+    }
+    let mut paths = Vec::new();
+    for name in names {
+        for directory in [
+            format!("stcxx-arduino/objects/{hash}"),
+            format!("stcxx-arduino/archives/{hash}"),
+            format!("stcxx/core-cache/{hash}"),
+            format!("stcxx/native-source-archives/{}", &hash[..16]),
+        ] {
+            paths.push(PathBuf::from(&directory).join(&name));
+        }
+    }
+    for name in [
+        "adapted.c",
+        "cpp-bridge.raw.asm",
+        "cpp-bridge.asm",
+        "cpp-bridge.rel",
+    ] {
+        paths.push(Path::new("stcxx").join(name));
+    }
+    for name in ["source.c", "source.rel", "source.lst"] {
+        paths.push(
+            Path::new("stcxx/native-source-closure")
+                .join(&hash[..16])
+                .join(name),
+        );
+    }
+    paths.push(
+        Path::new("stcxx/native-source-archives")
+            .join(&hash[..16])
+            .join("trimmed.lib"),
+    );
+    paths.push(
+        Path::new("stcxx-arduino/archives")
+            .join(&hash)
+            .join("core.lib"),
+    );
+    for extension in ["hex", "mem", "map", "lk"] {
+        paths.push(PathBuf::from(format!("firmware.stcxx.{extension}")));
+    }
+    paths.push(
+        Path::new("stcxx/native-cache")
+            .join(&hash)
+            .join("native.lib"),
+    );
+    Ok(paths)
+}
+
+fn link_inner(
+    platform: &Path,
+    args: &[String],
+    output: &Path,
+    hex: &Path,
+    link_directory: &Path,
+) -> Result<()> {
+    let work = link_directory.join("stcxx-arduino");
     let sdcc = absolute(&args[0])?;
     let sdar = sdcc
         .parent()
@@ -424,7 +619,7 @@ fn link(platform: &Path, args: &[String]) -> Result<()> {
     while let Some(arg) = flags.next() {
         if arg == "-o" {
             flags.next();
-            forwarded.extend(["-o".into(), text(&hex)]);
+            forwarded.extend(["-o".into(), text(hex)]);
         } else if ["-Wl,--whole-archive", "-Wl,--no-whole-archive"].contains(&arg.as_str()) {
             continue;
         } else if !arg.starts_with('-')
@@ -446,12 +641,23 @@ fn link(platform: &Path, args: &[String]) -> Result<()> {
         }
     }
     run_compiler(platform, &forwarded)?;
-    let elf = crate::firmware::from_hex(&fs::read(&hex)?)?;
+    let elf = crate::firmware::from_hex(&fs::read(hex)?)?;
+    if hex != output.with_extension("stcxx.hex") {
+        for extension in ["hex", "mem", "map", "lk"] {
+            let source = hex.with_extension(extension);
+            if source.is_file() {
+                write(
+                    &output.with_extension(format!("stcxx.{extension}")),
+                    &fs::read(source)?,
+                )?;
+            }
+        }
+    }
     write(
         &output.with_extension("mem"),
         &fs::read(hex.with_extension("mem"))?,
     )?;
-    write(&output, &elf)
+    write(output, &elf)
 }
 
 fn prepare(build: &Path, sketch: &Path) -> Result<()> {
@@ -588,24 +794,6 @@ mod tests {
     }
 
     #[test]
-    fn dependency_target_keeps_path_encoding_and_escaping() {
-        for (input, expected) in [
-            (
-                b"C:\\legacy\xb2\xe2\\.stcxx-unit-a\\out.o: source.c\n".as_slice(),
-                b"C:\\legacy\xb2\xe2\\out.o: source.c\n".as_slice(),
-            ),
-            (
-                b"C:/with\\ space/.stcxx-unit-a/out.o: source.cpp\n",
-                b"C:/with\\ space/out.o: source.cpp\n",
-            ),
-        ] {
-            assert_eq!(
-                retarget_dependency(input, ".stcxx-unit-a").unwrap(),
-                expected
-            );
-        }
-    }
-    #[test]
     fn bundles_check_inventory_and_relocate_cpp_metadata() {
         let temp = tempfile::tempdir().unwrap();
         let files = BTreeMap::from([
@@ -635,6 +823,130 @@ mod tests {
             .is_err()
         );
     }
+
+    #[test]
+    fn long_bundle_names_are_compact_and_heap_names_remain_stable() {
+        let temp = tempfile::tempdir().unwrap();
+        let name = format!("{}.cpp.o", "n".repeat(200));
+        let rel = text(Path::new(&name).with_extension("rel"));
+        let bytes = pack(
+            "unit",
+            BTreeMap::from([
+                (name.clone(), b"object".to_vec()),
+                (rel.clone(), b"object".to_vec()),
+                (format!("{name}.stcxx.json"), b"{}".to_vec()),
+                (format!("{rel}.stcxx-c.json"), b"{}".to_vec()),
+                ("source".into(), b"original source".to_vec()),
+            ]),
+            json!({"object":name}),
+        )
+        .unwrap();
+        let first = materialize_unit(&bytes, temp.path(), "u0000000000000001-").unwrap();
+        let second = materialize_unit(&bytes, temp.path(), "u0000000000000002-").unwrap();
+        assert_ne!(first, second);
+        assert!(first.file_name().unwrap().len() < 30);
+        let metadata: Value =
+            serde_json::from_slice(&fs::read(suffix(&first, ".stcxx.json")).unwrap()).unwrap();
+        assert_eq!(metadata["original_object_name"], name);
+        assert_eq!(
+            fs::read(metadata["source"].as_str().unwrap()).unwrap(),
+            b"original source"
+        );
+        for special in ["stcxx_heap.c.o", "stcxx_heap_state.c.o"] {
+            let bytes = pack(
+                "unit",
+                BTreeMap::from([
+                    (special.into(), b"heap object".to_vec()),
+                    ("source".into(), b"heap source".to_vec()),
+                ]),
+                json!({"object":special}),
+            )
+            .unwrap();
+            assert_eq!(
+                materialize_unit(&bytes, temp.path(), "")
+                    .unwrap()
+                    .file_name()
+                    .unwrap(),
+                special
+            );
+        }
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn bundles_materialize_at_windows_long_paths() {
+        use std::os::windows::ffi::OsStrExt;
+        let temp = tempfile::tempdir().unwrap();
+        let mut directory = temp.path().to_path_buf();
+        while directory.as_os_str().encode_wide().count() < 280 {
+            directory.push("long directory 中文");
+        }
+        let bytes = pack(
+            "unit",
+            BTreeMap::from([
+                ("test.cpp.o".into(), b"object".to_vec()),
+                ("source".into(), b"source".to_vec()),
+                ("test.cpp.o.stcxx.json".into(), b"{}".to_vec()),
+            ]),
+            json!({"object":"test.cpp.o"}),
+        )
+        .unwrap();
+        for _ in 0..2 {
+            let object = materialize_unit(&bytes, &directory, "").unwrap();
+            assert_eq!(fs::read(&object).unwrap(), b"object");
+            let meta: Value =
+                serde_json::from_slice(&fs::read(suffix(&object, ".stcxx.json")).unwrap()).unwrap();
+            assert_eq!(meta["object"], text(&object));
+            assert_eq!(
+                fs::read(meta["source"].as_str().unwrap()).unwrap(),
+                b"source"
+            );
+        }
+    }
+
+    #[test]
+    fn staged_link_reports_keep_heap_available_and_failures_invalidate_success() {
+        let temp = tempfile::tempdir().unwrap();
+        let stage = temp.path().join("stage");
+        let build = temp.path().join("build");
+        let heap = stage.join("stcxx/core-cache/hash/stcxx_heap.c.rel");
+        write(&heap, b"heap").unwrap();
+        write(&stage.join("stcxx/audit.json"), b"{}").unwrap();
+        write(&stage.join("stcxx/sdcc-link.log"), b"link log").unwrap();
+        write(
+            &stage.join("stcxx/manifest.json"),
+            &serde_json::to_vec(&json!({"heap":text(&heap),"outcome":"pass"})).unwrap(),
+        )
+        .unwrap();
+        let output = build.join("sketch.elf");
+        write(&output, b"ELF").unwrap();
+        write(&output.with_extension("hex"), b"HEX").unwrap();
+        write(&output.with_extension("mem"), b"MEM").unwrap();
+        copy_link_diagnostics(&stage, &build, true).unwrap();
+        let manifest: Value =
+            serde_json::from_slice(&fs::read(build.join("stcxx/manifest.json")).unwrap()).unwrap();
+        assert_eq!(
+            fs::read(manifest["heap"].as_str().unwrap()).unwrap(),
+            b"heap"
+        );
+        assert!(Path::new(manifest["heap"].as_str().unwrap()).starts_with(&build));
+        assert_eq!(
+            fs::read(build.join("stcxx/sdcc-link.log")).unwrap(),
+            b"link log"
+        );
+        invalidate_link(&output).unwrap();
+        copy_link_diagnostics(&stage, &build, false).unwrap();
+        for path in [
+            output.clone(),
+            output.with_extension("hex"),
+            output.with_extension("mem"),
+            build.join("stcxx/manifest.json"),
+        ] {
+            assert!(!path.exists(), "stale link success: {}", path.display());
+        }
+        assert!(build.join("stcxx/audit.json").is_file());
+    }
+
     #[test]
     fn rcs_replaces_old_members_but_arduino_recipe_updates() {
         let temp = tempfile::tempdir().unwrap();
