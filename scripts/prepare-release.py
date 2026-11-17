@@ -31,6 +31,19 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def filesystem_path(path):
+    """Use extended Windows paths for harness IO without changing tool argv."""
+    path = Path(path)
+    if os.name != "nt":
+        return path
+    text = os.path.abspath(path)
+    if text.startswith("\\\\?\\"):
+        return Path(text)
+    if text.startswith("\\\\"):
+        return Path("\\\\?\\UNC\\" + text[2:])
+    return Path("\\\\?\\" + text)
+
+
 def save(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8", newline="\n")
@@ -144,7 +157,7 @@ def validate_host(host, work, arduino_cli, output):
              "--build-property", f"runtime.tools.stcxx-toolchain.path={dependencies['stcxx-toolchain'].as_posix()}",
              "--build-property", f"runtime.tools.stc-cli.path={dependencies['stc-cli'].as_posix()}",
              sketch], log)
-        firmware = build / "Blink.ino.hex"
+        firmware = filesystem_path(build / "Blink.ino.hex")
         require(firmware.is_file(), f"Missing Blink firmware: {firmware}")
         return firmware
 
@@ -169,12 +182,12 @@ def validate_host(host, work, arduino_cli, output):
 
         sketch = long_directory("source", "Blink")
         build = long_directory("build", "output")
-        shutil.copytree(ROOT / "examples/Blink", sketch, dirs_exist_ok=True)
+        shutil.copytree(ROOT / "examples/Blink", filesystem_path(sketch), dirs_exist_ok=True)
         basename = "long_path_probe_" + "n" * 170
         header = sketch / (basename + ".h")
         source = sketch / (basename + ".c")
-        header.write_text("#define STCXX_LONG_PATH_PROBE_VALUE 42\n", encoding="utf-8")
-        source.write_text(f'#include "{header.name}"\n'
+        filesystem_path(header).write_text("#define STCXX_LONG_PATH_PROBE_VALUE 42\n", encoding="utf-8")
+        filesystem_path(source).write_text(f'#include "{header.name}"\n'
                           "typedef char stcxx_original_file_macros_match[\n"
                           "    sizeof(__BASE_FILE__) == sizeof(__FILE__) ? 1 : -1];\n"
                           "static inline unsigned char stcxx_release_long_path_probe(void) {\n"
@@ -182,7 +195,7 @@ def validate_host(host, work, arduino_cli, output):
         log = evidence / "windows-long-path-blink.log"
         firmware = compile_blink("stc32g12k128", build, sketch, log)
         check_hex(firmware, 0xfe0800, 0x1000000)
-        dependency = (build / "sketch" / (source.name + ".d")).read_text(encoding="utf-8")
+        dependency = filesystem_path(build / "sketch" / (source.name + ".d")).read_text(encoding="utf-8")
         restored = dependency.replace("\\ ", " ").replace("\\\\", "/").replace("\\", "/")
         for name in (source.name, header.name):
             require((build / "sketch" / name).as_posix() in restored,
