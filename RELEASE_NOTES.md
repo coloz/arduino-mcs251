@@ -5,7 +5,7 @@
 - 构建失败时清理过期固件与相关输出，避免误用上次构建产物。诊断 JSON 与所需附件完整导出，清理临时工作区后仍可查看诊断和运行 `advanced-size`。
 - 驱动二进制、Cargo 缓存、生成的依赖许可证和 `dist/` 发布产物由构建流程生成，并从 Git 排除；源码、依赖锁和工具归档绑定继续保留。
 
-升级后请清理旧构建缓存并重新编译。工具链 `0.3.0` 和上传器 `0.1.0-stc.2` 继续使用原有不可变归档。Windows x64 与 Apple Silicon macOS 15+ 的原生构建、EEPROM 边界和 Arduino 编译结果见发布资产中的 `release-validation.json`。尚未进行实板烧录验证。
+升级后请清理旧构建缓存并重新编译。工具链 `0.3.0` 和上传器 `0.1.0-stc.2` 继续使用原有不可变归档。Windows x64 与 Apple Silicon macOS 15+ 均通过原生构建、EEPROM 边界和 Arduino Blink 编译验证。Windows 长路径与短路径构建生成的 HEX 一致。尚未进行实板烧录验证。
 
 # arduino-mcs251 0.0.4（2026-11-10）
 

@@ -119,14 +119,23 @@ jobs:
           path: arduino-mcs251/dist/drivers
       - name: Build immutable platform archive and Arduino index
         run: python scripts/prepare-release.py assemble --drivers dist/drivers --output dist
-      - uses: actions/upload-artifact@v4
+      - name: Upload files for GitHub Release
+        uses: actions/upload-artifact@v4
         with:
           name: release-assets
+          # Use these files as the attachment list when publishing a GitHub Release.
           path: |
             arduino-mcs251/dist/arduino-mcs251-*.zip
-            arduino-mcs251/dist/arduino-mcs251-*.zip.json
             arduino-mcs251/dist/package_mcs251_index.json
-            arduino-mcs251/dist/release-validation.json
             arduino-mcs251/dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 30
+      - name: Archive packaging and validation reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence
+          path: |
+            arduino-mcs251/dist/arduino-mcs251-*.zip.json
+            arduino-mcs251/dist/release-validation.json
           if-no-files-found: error
           retention-days: 30

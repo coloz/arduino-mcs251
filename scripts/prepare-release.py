@@ -311,7 +311,7 @@ def assemble(drivers, output):
                   "hosts": reports, "platform_sha256": digest(archive), "index_sha256": digest(index),
                   "run_url": f"https://github.com/{repository}/actions/runs/{run_id}" if repository and run_id else None,
                   "hardware_tested": False})
-    (output / "SHA256SUMS").write_text("".join(f"{digest(path)}  {path.name}\n" for path in (archive, index, report)),
+    (output / "SHA256SUMS").write_text("".join(f"{digest(path)}  {path.name}\n" for path in (archive, index)),
                                        encoding="ascii", newline="\n")
 
 
